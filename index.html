@@ -6,6 +6,25 @@
   <title>SMU Mustangs Student Engagement Visualization</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Additional styling for info box */
+    .info {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      bottom: auto;
+      left: auto;
+      max-width: 350px;
+    }
+    
+    .title {
+      font-size: 28px;
+    }
+    
+    .subtitle {
+      font-size: 18px;
+    }
+  </style>
 </head>
 <body>
   <div class="title">SMU Mustangs Engagement</div>
@@ -90,8 +109,8 @@
         this.hoverMustang = null;
         this.time = 0;
         
-        // Animation settings
-        this.animationSpeed = 0.4; // Reduced speed for smoother animation
+        // Animation settings - increased speed from previous version
+        this.animationSpeed = 0.8; // Faster animation
         
         this.initializeVisualization();
       }
@@ -144,7 +163,7 @@
           const y = startY + row * gridSpacingY;
           
           // Determine mustang size based on total group count
-          const size = map(sqrt(this.studentData[i].avgTotal), 0, sqrt(80), 40, 120);
+          const size = map(sqrt(this.studentData[i].avgTotal), 0, sqrt(80), 50, 130); // Increased base size
           
           // Get color based on activation ratio
           const colorRgb = this.getColorFromPalette(this.studentData[i].activeRatio);
@@ -159,7 +178,7 @@
             colorRgb: colorRgb,
             angle: 0,
             galloping: 0,
-            gallopSpeed: random(0.02, 0.04) * this.animationSpeed, // Slower, more consistent galloping
+            gallopSpeed: random(0.04, 0.06) * this.animationSpeed, // Faster animation
             hovering: false,
             row: row,
             col: col,
@@ -177,13 +196,13 @@
             const activeGroup = {
               x: mustang.x + cos(angle) * radius,
               y: mustang.y + sin(angle) * radius,
-              size: 8,
+              size: 9, // Slightly larger dots
               parentMustang: mustang,
               colorRgb: this.smuRed.slice(), // Clone the color array
               opacity: j < mustang.data.avgActive ? 1 : 0.3, // Partial opacity for fractional counts
               angle: angle,
               distance: radius,
-              speed: random(0.01, 0.02)
+              speed: random(0.015, 0.025)
             };
             this.activeGroups.push(activeGroup);
           }
@@ -198,13 +217,13 @@
             const inactiveGroup = {
               x: mustang.x + cos(angle) * radius,
               y: mustang.y + sin(angle) * radius,
-              size: 5,
+              size: 6, // Slightly larger dots
               parentMustang: mustang,
               colorRgb: this.smuTeal.slice(), // Clone the color array
               opacity: j < inactiveCount ? 0.6 : 0.2,
               angle: angle,
               distance: radius,
-              speed: random(0.005, 0.01)
+              speed: random(0.008, 0.012)
             };
             this.inactiveGroups.push(inactiveGroup);
           }
@@ -249,9 +268,9 @@
           
           // If hovering, make the mustang slightly more animated but still smooth
           if (mustang.hovering) {
-            mustang.gallopSpeed = 0.06 * this.animationSpeed;
+            mustang.gallopSpeed = 0.08 * this.animationSpeed;
           } else {
-            mustang.gallopSpeed = random(0.02, 0.04) * this.animationSpeed;
+            mustang.gallopSpeed = random(0.04, 0.06) * this.animationSpeed;
           }
         }
         
@@ -362,7 +381,7 @@
           for (let j = -1; j <= 1; j++) {
             if (i !== 0 || j !== 0) { // Skip the center position
               fill(0, 0, 0, 150);
-              textSize(mustang.size * 0.17);
+              textSize(mustang.size * 0.20); // Increased text size
               text(mustang.data.groupRange, mustang.x + i, groupTextY + j);
             }
           }
@@ -370,12 +389,12 @@
         
         // Main text - group range
         fill(255, 255, 255, 255);
-        textSize(mustang.size * 0.17);
+        textSize(mustang.size * 0.20); // Increased text size
         text(mustang.data.groupRange, mustang.x, groupTextY);
         
         // Activation percentage with similar outline technique
-        let percentTextY = groupTextY + mustang.size * 0.2;
-        textSize(mustang.size * 0.14);
+        let percentTextY = groupTextY + mustang.size * 0.22;
+        textSize(mustang.size * 0.16); // Increased text size
         
         // Outline/shadow for percentage
         for (let i = -1; i <= 1; i++) {
@@ -412,28 +431,26 @@
         stroke(204, 0, 53);
         strokeWeight(2);
         rectMode(CORNER);
-        rect(infoX, infoY, 220, 130, 10); // Reduced height since we removed the motto
+        rect(infoX, infoY, 240, 140, 10); // Larger panel for bigger text
         
-        // Draw info text
+        // Draw info text - increased text size
         noStroke();
         textAlign(LEFT, TOP);
         fill(255);
-        textSize(16);
-        text(`Group Range: ${data.groupRange}`, infoX + 10, infoY + 10);
+        textSize(18); // Increased from 16
+        text(`Group Range: ${data.groupRange}`, infoX + 12, infoY + 12);
         
-        textSize(14);
+        textSize(16); // Increased from 14
         fill(240);
-        text(`Total Groups: ${data.avgTotal.toFixed(1)}`, infoX + 10, infoY + 40);
+        text(`Total Groups: ${data.avgTotal.toFixed(1)}`, infoX + 12, infoY + 42);
         
         // Use SMU red for active groups
         fill(204, 0, 53);
-        text(`Active Groups: ${data.avgActive.toFixed(1)}`, infoX + 10, infoY + 65);
+        text(`Active Groups: ${data.avgActive.toFixed(1)}`, infoX + 12, infoY + 72);
         
         // Use SMU teal for inactive groups
         fill(89, 195, 195);
-        text(`Inactive Groups: ${(data.avgTotal - data.avgActive).toFixed(1)}`, infoX + 10, infoY + 90);
-        
-        // Removed the "World Changers Shaped Here" motto
+        text(`Inactive Groups: ${(data.avgTotal - data.avgActive).toFixed(1)}`, infoX + 12, infoY + 102);
       }
       
       checkHover(x, y) {
