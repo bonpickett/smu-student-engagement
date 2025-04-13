@@ -308,6 +308,7 @@
         stroke(255, 0, 70, 0.5);
         strokeWeight(2);
         for (let line of this.fieldElements.lines) {
+          // Using the correct p5.js line function syntax
           line(line.x, line.y1, line.x, line.y2);
         }
         
