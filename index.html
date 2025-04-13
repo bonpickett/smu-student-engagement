@@ -275,9 +275,6 @@
         if (this.hoverMustang) {
           this.drawMustangInfo(this.hoverMustang);
         }
-        
-        // Draw SMU logo
-        this.drawSMULogo();
       }
       
       drawBackgroundElements() {
@@ -312,20 +309,25 @@
         noTint();
         
         // Add text for group count range
-        if (mustang.size > 60) {
-          textAlign(CENTER, CENTER);
-          textStyle(BOLD);
-          fill(255);
-          
-          // Position text below the logo
-          const textY = mustang.size * 0.6;
-          textSize(mustang.size * 0.2);
-          text(mustang.data.groupRange, 0, textY);
-          
-          // Show activation ratio
-          textSize(mustang.size * 0.15);
-          text(`${mustang.data.activeRatio.toFixed(1)}%`, 0, textY + mustang.size * 0.2);
-        }
+        textAlign(CENTER, CENTER);
+        textStyle(BOLD);
+        
+        // Create a semi-transparent background for the text to make it more readable
+        noStroke();
+        fill(0, 0, 30, 0.5);
+        const textBoxSize = mustang.size * 0.5;
+        const textY = mustang.size * 0.6;
+        rectMode(CENTER);
+        rect(0, textY + mustang.size * 0.1, textBoxSize, mustang.size * 0.3, 10);
+        
+        // Draw the text
+        fill(255);
+        textSize(mustang.size * 0.18);
+        text(mustang.data.groupRange, 0, textY);
+        
+        // Show activation ratio
+        textSize(mustang.size * 0.14);
+        text(`${mustang.data.activeRatio.toFixed(1)}%`, 0, textY + mustang.size * 0.2);
         
         pop();
         
@@ -336,36 +338,6 @@
           strokeWeight(2);
           ellipse(mustang.x, mustang.y, mustang.size * 1.5);
         }
-      }
-      
-      drawSMULogo() {
-        // Draw a simplified SMU logo in the bottom right corner
-        const size = 60;
-        const x = width - size - 20;
-        const y = height - size - 20;
-        
-        noStroke();
-        fill(this.smuRed[0], this.smuRed[1], this.smuRed[2], 0.9);
-        
-        // Draw a simplified SMU shield
-        beginShape();
-        vertex(x, y);
-        vertex(x + size, y);
-        vertex(x + size, y + size * 0.8);
-        vertex(x + size/2, y + size);
-        vertex(x, y + size * 0.8);
-        endShape(CLOSE);
-        
-        // Text "SMU"
-        fill(255);
-        textAlign(CENTER, CENTER);
-        textSize(size * 0.4);
-        textStyle(BOLD);
-        text("SMU", x + size/2, y + size * 0.4);
-        
-        // Text "2026"
-        textSize(size * 0.25);
-        text("2026", x + size/2, y + size * 0.65);
       }
       
       drawMustangInfo(mustang) {
