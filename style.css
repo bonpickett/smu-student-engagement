@@ -24,7 +24,7 @@ canvas {
 .header-container {
   text-align: center;
   padding: 15px 0;
-  background-color: rgba(33, 46, 121, 0.8);
+  background-color: transparent; /* Removed background */
   border-bottom: 2px solid rgba(204, 0, 53, 0.7);
   z-index: 20;
 }
