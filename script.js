@@ -295,9 +295,11 @@ class MustangsEngagementArt {
       const x = startX + col * gridSpacingX;
       const y = startY + row * gridSpacingY;
       
-      // Determine mustang size based on total group count
+      // Determine mustang size based on total group count, but limit to prevent overlap
       const maxGroupCount = this.studentData === class2026Data ? 80 : 50;
-      const size = p.map(p.sqrt(this.studentData[i].avgTotal), 0, p.sqrt(maxGroupCount), 40, 110);
+      // Calculate base size from data but cap it to maxSize to prevent overlap
+      const baseSize = p.map(p.sqrt(this.studentData[i].avgTotal), 0, p.sqrt(maxGroupCount), 30, 100);
+      const size = Math.min(baseSize, maxSize);
       
       // Get color based on activation ratio
       const colorRgb = this.getColorFromPalette(this.studentData[i].activeRatio);
@@ -375,11 +377,15 @@ class MustangsEngagementArt {
     
     // Use consistent values for both visualizations
     const availableHeight = p.height * 0.9;
-    const gridSpacingX = p.width * 0.75 / (cols - 1);
-    const gridSpacingY = availableHeight * 0.7 / (rows - 1);
+    const gridSpacingX = p.width * 0.85 / (cols - 1); // Increased from 0.75
+    const gridSpacingY = availableHeight * 0.8 / (rows - 1); // Increased from 0.7
     
     const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
     const startY = p.height * 0.18; // Consistent starting point
+    
+    // Calculate the maximum mustang size based on spacing to prevent overlap
+    const maxSize = Math.min(gridSpacingX * 0.5, gridSpacingY * 0.5);
+    const maxOrbitRadius = Math.min(gridSpacingX, gridSpacingY) * 0.2;
     
     // Reposition mustangs
     for (let i = 0; i < this.mustangs.length; i++) {
@@ -389,6 +395,24 @@ class MustangsEngagementArt {
       
       mustang.targetX = startX + col * gridSpacingX;
       mustang.targetY = startY + row * gridSpacingY;
+      
+      // Recalculate size to prevent overlap
+      const maxGroupCount = this.studentData === class2026Data ? 80 : 50;
+      const baseSize = p.map(p.sqrt(mustang.data.avgTotal), 0, p.sqrt(maxGroupCount), 30, 100);
+      mustang.size = Math.min(baseSize, maxSize);
+      
+      // Update orbit distances for groups
+      for (let group of this.activeGroups) {
+        if (group.parentMustang === mustang) {
+          group.distance = p.min(mustang.size * 0.8, maxOrbitRadius) * p.random(0.8, 1.1);
+        }
+      }
+      
+      for (let group of this.inactiveGroups) {
+        if (group.parentMustang === mustang) {
+          group.distance = p.min(mustang.size * 0.6, maxOrbitRadius * 0.8) * p.random(0.8, 1.1);
+        }
+      }
     }
   }
   
