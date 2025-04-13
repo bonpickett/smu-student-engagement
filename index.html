@@ -29,14 +29,20 @@
       textFont('Arial');
       frameRate(30);
       
-      // Initialize the visualization
-      dataArt = new MustangsEngagementArt();
+      // Add a slight delay before initializing to ensure window size is correctly measured
+      setTimeout(() => {
+        // Initialize the visualization
+        dataArt = new MustangsEngagementArt();
+      }, 100);
     }
 
     function draw() {
       background(53, 76, 161); // SMU Blue background
-      dataArt.update();
-      dataArt.display();
+      
+      if (dataArt) {
+        dataArt.update();
+        dataArt.display();
+      }
     }
 
     function windowResized() {
@@ -45,7 +51,9 @@
     }
 
     function mouseMoved() {
-      dataArt.checkHover(mouseX, mouseY);
+      if (dataArt) {
+        dataArt.checkHover(mouseX, mouseY);
+      }
     }
 
     class MustangsEngagementArt {
@@ -135,8 +143,9 @@
         const gridSpacingY = windowHeight * 0.7 / (rows - 1); // Increased from 0.6 to 0.7
         const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
         
-        // Move the entire grid down a bit to avoid overlap with the title box
-        const startY = this.centerY - (gridSpacingY * (rows - 1)) / 2 + windowHeight * 0.05;
+        // Move the entire grid down to avoid overlap with the title box
+        // and up to avoid the bottom row being cut off
+        const startY = this.centerY - (gridSpacingY * (rows - 1)) / 2 + windowHeight * 0.08;
         
         // Create mustangs for each student group range
         for (let i = 0; i < totalMustangs; i++) {
@@ -229,8 +238,9 @@
         const gridSpacingY = windowHeight * 0.7 / (rows - 1); // Increased from 0.6 to 0.7
         const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
         
-        // Move the entire grid down a bit to avoid overlap with the title box
-        const startY = this.centerY - (gridSpacingY * (rows - 1)) / 2 + windowHeight * 0.05;
+        // Move the entire grid down to avoid overlap with the title box
+        // and up to avoid the bottom row being cut off
+        const startY = this.centerY - (gridSpacingY * (rows - 1)) / 2 + windowHeight * 0.08;
         
         // Reposition mustangs
         for (let i = 0; i < this.mustangs.length; i++) {
