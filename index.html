@@ -134,18 +134,25 @@
       }
       
       initializeVisualization() {
-        // Create a grid layout for mustangs with increased spacing
+        // Create a grid layout for mustangs with adjusted spacing
         const rows = 3;
         const cols = 5;
         const totalMustangs = this.studentData.length;
         
-        const gridSpacingX = windowWidth * 0.8 / (cols - 1); // Increased from 0.7 to 0.8
-        const gridSpacingY = windowHeight * 0.7 / (rows - 1); // Increased from 0.6 to 0.7
+        // Calculate header height based on window size (approximate)
+        const headerHeight = windowHeight * 0.12; // Estimate header takes up about 12% of screen height
+        
+        // Calculate available space for visualization
+        const availableHeight = windowHeight - headerHeight - (windowHeight * 0.10); // Subtracting header and 10% bottom margin
+        
+        // Calculate grid spacing, ensuring rows are closer but still don't overlap
+        const gridSpacingX = windowWidth * 0.75 / (cols - 1); // Slightly reduced from 0.8
+        const gridSpacingY = availableHeight * 0.65 / (rows - 1); // Reduced from 0.7 to bring rows closer
+        
         const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
         
-        // Move the entire grid down to avoid overlap with the title box
-        // and up to avoid the bottom row being cut off
-        const startY = this.centerY - (gridSpacingY * (rows - 1)) / 2 + windowHeight * 0.08;
+        // Position the grid to start just below the header and ensure the bottom row fits
+        const startY = headerHeight + (availableHeight * 0.2); // Start at header height plus a small padding
         
         // Create mustangs for each student group range
         for (let i = 0; i < totalMustangs; i++) {
@@ -230,17 +237,24 @@
         this.centerX = windowWidth / 2;
         this.centerY = windowHeight / 2;
         
-        // Recalculate grid layout with increased spacing
+        // Recalculate grid layout with adjusted spacing
         const rows = 3;
         const cols = 5;
         
-        const gridSpacingX = windowWidth * 0.8 / (cols - 1); // Increased from 0.7 to 0.8
-        const gridSpacingY = windowHeight * 0.7 / (rows - 1); // Increased from 0.6 to 0.7
+        // Calculate header height based on window size (approximate)
+        const headerHeight = windowHeight * 0.12; // Estimate header takes up about 12% of screen height
+        
+        // Calculate available space for visualization
+        const availableHeight = windowHeight - headerHeight - (windowHeight * 0.10); // Subtracting header and 10% bottom margin
+        
+        // Calculate grid spacing, ensuring rows are closer but still don't overlap
+        const gridSpacingX = windowWidth * 0.75 / (cols - 1); // Slightly reduced from 0.8
+        const gridSpacingY = availableHeight * 0.65 / (rows - 1); // Reduced from 0.7 to bring rows closer
+        
         const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
         
-        // Move the entire grid down to avoid overlap with the title box
-        // and up to avoid the bottom row being cut off
-        const startY = this.centerY - (gridSpacingY * (rows - 1)) / 2 + windowHeight * 0.08;
+        // Position the grid to start just below the header and ensure the bottom row fits
+        const startY = headerHeight + (availableHeight * 0.2); // Start at header height plus a small padding
         
         // Reposition mustangs
         for (let i = 0; i < this.mustangs.length; i++) {

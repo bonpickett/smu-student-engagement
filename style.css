@@ -17,7 +17,6 @@ canvas {
   left: 0;
   width: 100%;
   background-color: rgba(33, 46, 121, 0.9);
-  border-bottom: 4px solid #cc0035;
   padding: 15px 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   z-index: 10;
