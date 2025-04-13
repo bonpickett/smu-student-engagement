@@ -23,7 +23,7 @@
 
     function setup() {
       createCanvas(windowWidth, windowHeight);
-      colorMode(HSB, 360, 100, 100, 1);
+      colorMode(RGB); // Switch to RGB for SMU brand colors
       textFont('Arial');
       frameRate(30);
       
@@ -32,7 +32,7 @@
     }
 
     function draw() {
-      background(220, 60, 8); // SMU Blue background
+      background(53, 76, 161); // SMU Blue background
       dataArt.update();
       dataArt.display();
     }
@@ -66,9 +66,20 @@
           { groupRange: "70+", avgTotal: 79.0, avgActive: 7.0, activeRatio: 8.4 }
         ];
         
-        // SMU colors (in HSB format)
-        this.smuRed = [0, 80, 90]; 
-        this.smuBlue = [220, 80, 90];
+        // SMU brand colors in RGB format
+        this.smuBlue = [53, 76, 161];
+        this.smuRed = [204, 0, 53]; 
+        this.smuYellow = [249, 200, 14];
+        this.smuTeal = [89, 195, 195];
+        this.white = [255, 255, 255];
+        
+        // Color palette for mustangs based on activation ratio
+        this.colorPalette = [
+          this.white,      // Lowest activation (0%)
+          this.smuTeal,    // Low activation
+          this.smuYellow,  // Medium activation
+          this.smuRed      // Highest activation (35%+)
+        ];
         
         this.mustangs = [];
         this.activeGroups = [];
@@ -80,6 +91,33 @@
         this.time = 0;
         
         this.initializeVisualization();
+      }
+      
+      // Get color by interpolating through the palette based on activation ratio
+      getColorFromPalette(ratio) {
+        // Map the ratio to a position in our color palette
+        const maxRatio = 35; // Maximum activation ratio in our data
+        const normalizedRatio = constrain(ratio / maxRatio, 0, 1);
+        
+        // Calculate which segment of the palette we're in
+        const segments = this.colorPalette.length - 1;
+        const segment = normalizedRatio * segments;
+        const index = floor(segment);
+        const t = segment - index; // fractional part for interpolation
+        
+        if (index >= segments) {
+          return this.colorPalette[segments];
+        }
+        
+        // Linear interpolation between the two closest colors
+        const colorA = this.colorPalette[index];
+        const colorB = this.colorPalette[index + 1];
+        
+        return [
+          lerp(colorA[0], colorB[0], t),
+          lerp(colorA[1], colorB[1], t),
+          lerp(colorA[2], colorB[2], t)
+        ];
       }
       
       initializeVisualization() {
@@ -105,9 +143,8 @@
           // Determine mustang size based on total group count
           const size = map(sqrt(this.studentData[i].avgTotal), 0, sqrt(80), 40, 120);
           
-          // Determine color based on activation ratio - red for high activation, blue for low
-          const activationHue = map(this.studentData[i].activeRatio, 0, 35, this.smuBlue[0], this.smuRed[0]);
-          const activationSat = map(this.studentData[i].activeRatio, 0, 35, this.smuBlue[1], this.smuRed[1]);
+          // Get color based on activation ratio
+          const colorRgb = this.getColorFromPalette(this.studentData[i].activeRatio);
           
           const mustang = {
             x: x,
@@ -116,17 +153,15 @@
             targetY: y,
             size: size,
             data: this.studentData[i],
-            hue: activationHue,
-            saturation: activationSat,
-            brightness: 85,
+            colorRgb: colorRgb,
             angle: 0,
             galloping: 0,
             gallopSpeed: random(0.05, 0.1),
             hovering: false,
             row: row,
             col: col,
-            // Some variety for each mustang
-            flipX: random() > 0.5
+            // All mustangs facing same direction
+            flipX: false
           };
           
           this.mustangs.push(mustang);
@@ -141,9 +176,7 @@
               y: mustang.y + sin(angle) * radius,
               size: 8,
               parentMustang: mustang,
-              hue: this.smuRed[0],
-              saturation: this.smuRed[1],
-              brightness: this.smuRed[2],
+              colorRgb: this.smuRed.slice(), // Clone the color array
               opacity: j < mustang.data.avgActive ? 1 : 0.3, // Partial opacity for fractional counts
               angle: angle,
               distance: radius,
@@ -164,9 +197,7 @@
               y: mustang.y + sin(angle) * radius,
               size: 5,
               parentMustang: mustang,
-              hue: this.smuBlue[0],
-              saturation: this.smuBlue[1],
-              brightness: this.smuBlue[2],
+              colorRgb: this.smuTeal.slice(), // Clone the color array
               opacity: j < inactiveCount ? 0.6 : 0.2,
               angle: angle,
               distance: radius,
@@ -248,18 +279,18 @@
         // Draw inactive groups
         for (let group of this.inactiveGroups) {
           noStroke();
-          fill(group.hue, group.saturation, group.brightness, group.opacity * 0.6);
+          fill(group.colorRgb[0], group.colorRgb[1], group.colorRgb[2], 255 * group.opacity);
           ellipse(group.x, group.y, group.size);
         }
         
         // Draw active groups
         for (let group of this.activeGroups) {
           noStroke();
-          fill(group.hue, group.saturation, group.brightness, group.opacity * 0.8);
+          fill(group.colorRgb[0], group.colorRgb[1], group.colorRgb[2], 255 * group.opacity);
           ellipse(group.x, group.y, group.size);
           
           // Add glow to active groups
-          fill(group.hue, group.saturation, group.brightness, group.opacity * 0.3);
+          fill(group.colorRgb[0], group.colorRgb[1], group.colorRgb[2], 255 * group.opacity * 0.3);
           ellipse(group.x, group.y, group.size * 1.5);
         }
         
@@ -277,7 +308,7 @@
       drawBackgroundElements() {
         // Draw a large SMU in the background
         noStroke();
-        fill(255, 0, 70, 0.05);
+        fill(255, 255, 255, 15); // Subtle white text
         textAlign(CENTER, CENTER);
         textStyle(BOLD);
         textSize(width * 0.3);
@@ -297,8 +328,8 @@
           scale(-1, 1);
         }
         
-        // Apply the color tint
-        tint(mustang.hue, mustang.saturation, mustang.brightness);
+        // Apply the color tint using RGB colors
+        tint(mustang.colorRgb[0], mustang.colorRgb[1], mustang.colorRgb[2]);
         
         // Calculate aspect ratio adjustment, assuming svg has width of 612
         const targetWidth = mustang.size;
@@ -320,7 +351,7 @@
         
         // Create a semi-transparent background for the text to make it more readable
         noStroke();
-        fill(0, 0, 30, 0.5);
+        fill(0, 0, 0, 128);
         const textBoxSize = mustang.size * 0.5;
         const textY = mustang.y + mustang.size * 0.6;
         rectMode(CENTER);
@@ -339,7 +370,7 @@
         // If hovering, add subtle highlight/glow
         if (mustang.hovering) {
           noFill();
-          stroke(mustang.hue, mustang.saturation, mustang.brightness, 0.7);
+          stroke(255, 255, 255, 180);
           strokeWeight(2);
           ellipse(mustang.x, mustang.y, mustang.size * 1.5);
         }
@@ -351,8 +382,8 @@
         const infoY = mustang.y - mustang.size * 0.5;
         
         // Draw info panel background
-        fill(220, 60, 15, 0.9); // SMU Blue background
-        stroke(this.smuRed[0], this.smuRed[1], this.smuRed[2]);
+        fill(53, 76, 161, 230); // SMU Blue background
+        stroke(204, 0, 53);
         strokeWeight(2);
         rectMode(CORNER);
         rect(infoX, infoY, 220, 160, 10);
@@ -360,27 +391,27 @@
         // Draw info text
         noStroke();
         textAlign(LEFT, TOP);
-        fill(360, 0, 90);
+        fill(255);
         textSize(16);
         text(`Group Range: ${data.groupRange}`, infoX + 10, infoY + 10);
         
         textSize(14);
-        fill(360, 0, 80);
+        fill(240);
         text(`Total Groups: ${data.avgTotal.toFixed(1)}`, infoX + 10, infoY + 40);
         
         // Use SMU red for active groups
-        fill(this.smuRed[0], this.smuRed[1], this.smuRed[2]);
+        fill(204, 0, 53);
         text(`Active Groups: ${data.avgActive.toFixed(1)}`, infoX + 10, infoY + 65);
         
-        // Use SMU blue for inactive groups
-        fill(this.smuBlue[0], this.smuBlue[1], this.smuBlue[2]);
+        // Use SMU teal for inactive groups
+        fill(89, 195, 195);
         text(`Inactive Groups: ${(data.avgTotal - data.avgActive).toFixed(1)}`, infoX + 10, infoY + 90);
         
-        fill(360, 0, 90);
+        fill(255);
         text(`Activation Rate: ${data.activeRatio.toFixed(1)}%`, infoX + 10, infoY + 115);
         
         // Add SMU motto
-        fill(this.smuRed[0], this.smuRed[1], this.smuRed[2], 0.8);
+        fill(249, 200, 14); // Yellow for motto
         textStyle(ITALIC);
         textSize(10);
         text("World Changers Shaped Here", infoX + 10, infoY + 140);
