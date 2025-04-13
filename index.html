@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Engagement Data Art</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="title">Constellation of Student Engagement</div>
+  <div class="subtitle">Visual representation of how students connect with campus groups</div>
+  <div class="info">Hover over elements to explore the data. Each "star" represents a student group count range.</div>
+
+  <script>
+    function setup() {
+      createCanvas(windowWidth, windowHeight);
+      colorMode(HSB, 360, 100, 100, 1);
+      textFont('Arial');
+      frameRate(30);
+      
+      // Initialize the visualization
+      dataArt = new StudentEngagementArt();
+    }
+
+    function draw() {
+      background(230, 15, 5);
+      dataArt.update();
+      dataArt.display();
+    }
+
+    function windowResized() {
+      resizeCanvas(windowWidth, windowHeight);
+      dataArt.resize();
+    }
+
+    function mouseMoved() {
+      dataArt.checkHover(mouseX, mouseY);
+    }
+
+    class StudentEngagementArt {
+      constructor() {
+        this.studentData = [
+          { groupRange: "0-5", avgTotal: 3.8, avgActive: 0.1, activeRatio: 1.7 },
+          { groupRange: "6-9", avgTotal: 7.9, avgActive: 0.9, activeRatio: 11.0 },
+          { groupRange: "10-13", avgTotal: 11.5, avgActive: 2.3, activeRatio: 20.3 },
+          { groupRange: "14-17", avgTotal: 15.5, avgActive: 3.8, activeRatio: 24.5 },
+          { groupRange: "18-21", avgTotal: 19.5, avgActive: 5.0, activeRatio: 25.7 },
+          { groupRange: "22-25", avgTotal: 23.6, avgActive: 6.2, activeRatio: 26.3 },
+          { groupRange: "26-29", avgTotal: 27.4, avgActive: 7.0, activeRatio: 25.5 },
+          { groupRange: "30-33", avgTotal: 31.4, avgActive: 8.1, activeRatio: 25.6 },
+          { groupRange: "34-37", avgTotal: 35.5, avgActive: 9.5, activeRatio: 26.9 },
+          { groupRange: "38-41", avgTotal: 39.4, avgActive: 9.8, activeRatio: 24.9 },
+          { groupRange: "42-45", avgTotal: 43.6, avgActive: 15.0, activeRatio: 34.3 },
+          { groupRange: "46-49", avgTotal: 47.7, avgActive: 10.9, activeRatio: 22.8 },
+          { groupRange: "50-59", avgTotal: 54.3, avgActive: 12.8, activeRatio: 23.6 },
+          { groupRange: "60-69", avgTotal: 64.5, avgActive: 11.1, activeRatio: 17.2 },
+          { groupRange: "70+", avgTotal: 79.0, avgActive: 7.0, activeRatio: 8.4 }
+        ];
+        
+        this.nodes = [];
+        this.connections = [];
+        this.activeNodes = [];
+        this.inactiveNodes = [];
+        this.centerX = windowWidth / 2;
+        this.centerY = windowHeight / 2;
+        this.maxRadius = min(windowWidth, windowHeight) * 0.4;
+        this.hoverNode = null;
+        this.time = 0;
+        
+        this.initializeVisualization();
+      }
+      
+      initializeVisualization() {
+        // Create main nodes (student group ranges)
+        for (let i = 0; i < this.studentData.length; i++) {
+          const angle = map(i, 0, this.studentData.length, 0, TWO_PI);
+          const radius = map(sqrt(this.studentData[i].avgTotal), 0, sqrt(80), 0, this.maxRadius);
+          const x = this.centerX + cos(angle) * radius;
+          const y = this.centerY + sin(angle) * radius;
+          
+          const node = {
+            x: x,
+            y: y,
+            targetX: x,
+            targetY: y,
+            radius: map(log(this.studentData[i].avgTotal), 0, log(80), 15, 40),
+            data: this.studentData[i],
+            hue: map(this.studentData[i].activeRatio, 0, 35, 200, 60),
+            brightness: map(this.studentData[i].activeRatio, 0, 35, 50, 90),
+            saturation: 80,
+            angle: angle,
+            baseRadius: radius,
+            hovering: false
+          };
+          
+          this.nodes.push(node);
+        }
+        
+        // Create active and inactive participation nodes for each main node
+        for (let node of this.nodes) {
+          const activeCount = node.data.avgActive;
+          const inactiveCount = node.data.avgTotal - node.data.avgActive;
+          
+          // Create active nodes
+          const activeNodeCount = ceil(activeCount);
+          for (let i = 0; i < activeNodeCount; i++) {
+            const angle = node.angle + random(-PI/4, PI/4);
+            const distance = node.radius * 1.8 * random(0.8, 1.2);
+            const activeNode = {
+              x: node.x + cos(angle) * distance,
+              y: node.y + sin(angle) * distance,
+              radius: 4,
+              parentNode: node,
+              active: true,
+              hue: 120,
+              saturation: 80,
+              brightness: 90,
+              opacity: i < activeCount ? 1 : 0.3, // Partial opacity for fractional counts
+              angle: angle,
+              distance: distance,
+              speed: random(0.003, 0.008)
+            };
+            this.activeNodes.push(activeNode);
+            
+            // Create connection between main node and active node
+            this.connections.push({
+              start: node,
+              end: activeNode,
+              strength: 0.8
+            });
+          }
+          
+          // Create inactive nodes
+          const inactiveNodeCount = ceil(inactiveCount);
+          const inactiveDisplayCount = min(inactiveNodeCount, 40); // Limit for visual clarity
+          
+          for (let i = 0; i < inactiveDisplayCount; i++) {
+            const angle = node.angle + random(-PI/3, PI/3);
+            const distance = node.radius * random(0.8, 1.5);
+            const inactiveNode = {
+              x: node.x + cos(angle) * distance,
+              y: node.y + sin(angle) * distance,
+              radius: 2,
+              parentNode: node,
+              active: false,
+              hue: 200,
+              saturation: 30,
+              brightness: 70,
+              opacity: i < inactiveCount ? 0.6 : 0.2, // Partial opacity for fractional counts
+              angle: angle,
+              distance: distance,
+              speed: random(0.001, 0.003)
+            };
+            this.inactiveNodes.push(inactiveNode);
+            
+            // Create connection between main node and inactive node
+            this.connections.push({
+              start: node,
+              end: inactiveNode,
+              strength: 0.3
+            });
+          }
+        }
+      }
+      
+      resize() {
+        this.centerX = windowWidth / 2;
+        this.centerY = windowHeight / 2;
+        this.maxRadius = min(windowWidth, windowHeight) * 0.4;
+        
+        // Reposition nodes
+        for (let i = 0; i < this.nodes.length; i++) {
+          const node = this.nodes[i];
+          const radius = map(sqrt(node.data.avgTotal), 0, sqrt(80), 0, this.maxRadius);
+          node.targetX = this.centerX + cos(node.angle) * radius;
+          node.targetY = this.centerY + sin(node.angle) * radius;
+          node.baseRadius = radius;
+        }
+      }
+      
+      update() {
+        this.time += 0.01;
+        
+        // Update main nodes
+        for (let node of this.nodes) {
+          node.x = lerp(node.x, node.targetX, 0.1);
+          node.y = lerp(node.y, node.targetY, 0.1);
+          
+          if (node.hovering) {
+            node.targetX = this.centerX + cos(node.angle) * (node.baseRadius * 1.1);
+            node.targetY = this.centerY + sin(node.angle) * (node.baseRadius * 1.1);
+          } else {
+            node.targetX = this.centerX + cos(node.angle) * node.baseRadius;
+            node.targetY = this.centerY + sin(node.angle) * node.baseRadius;
+          }
+        }
+        
+        // Update active nodes
+        for (let node of this.activeNodes) {
+          const parent = node.parentNode;
+          const wobble = sin(this.time * node.speed * 10) * 5;
+          
+          // Orbit around parent node with slight wobble
+          node.angle += node.speed;
+          node.x = parent.x + cos(node.angle) * (node.distance + wobble);
+          node.y = parent.y + sin(node.angle) * (node.distance + wobble);
+        }
+        
+        // Update inactive nodes
+        for (let node of this.inactiveNodes) {
+          const parent = node.parentNode;
+          
+          // Just slight movement around original position
+          const drift = sin(this.time * node.speed * 5) * 3;
+          node.x = parent.x + cos(node.angle) * (node.distance + drift);
+          node.y = parent.y + sin(node.angle) * (node.distance + drift);
+        }
+      }
+      
+      display() {
+        // Draw background gradient
+        this.drawBackgroundGradient();
+        
+        // Draw connections
+        this.drawConnections();
+        
+        // Draw inactive nodes
+        for (let node of this.inactiveNodes) {
+          noStroke();
+          fill(node.hue, node.saturation, node.brightness, node.opacity * 0.8);
+          ellipse(node.x, node.y, node.radius * 2);
+        }
+        
+        // Draw active nodes
+        for (let node of this.activeNodes) {
+          noStroke();
+          fill(node.hue, node.saturation, node.brightness, node.opacity);
+          ellipse(node.x, node.y, node.radius * 2);
+          
+          // Add glow effect
+          for (let i = 0; i < 3; i++) {
+            fill(node.hue, node.saturation, node.brightness, node.opacity * (0.2 - i * 0.05));
+            ellipse(node.x, node.y, node.radius * (2 + i * 1.5));
+          }
+        }
+        
+        // Draw main nodes
+        for (let node of this.nodes) {
+          // Draw glow for main nodes
+          for (let i = 0; i < 4; i++) {
+            noStroke();
+            fill(node.hue, node.saturation, node.brightness, 0.1 - i * 0.02);
+            ellipse(node.x, node.y, node.radius * (2 + i));
+          }
+          
+          // Draw main node circles
+          noStroke();
+          fill(node.hue, node.saturation, node.brightness, 0.9);
+          ellipse(node.x, node.y, node.radius * 2);
+          
+          // Draw inner highlight
+          fill(node.hue, node.saturation - 20, node.brightness + 10, 0.5);
+          ellipse(node.x - node.radius * 0.3, node.y - node.radius * 0.3, node.radius);
+        }
+        
+        // Draw hover information
+        if (this.hoverNode) {
+          this.drawNodeInfo(this.hoverNode);
+        }
+      }
+      
+      drawConnections() {
+        for (let conn of this.connections) {
+          const start = conn.start;
+          const end = conn.end;
+          
+          // Calculate distance and opacity based on it
+          const d = dist(start.x, start.y, end.x, end.y);
+          const maxDist = 150;
+          const opacity = map(min(d, maxDist), 0, maxDist, conn.strength, 0.05);
+          
+          // Active connections are green, inactive are blue
+          const hue = end.active ? 120 : 200;
+          const sat = end.active ? 60 : 30;
+          const brightness = end.active ? 80 : 60;
+          
+          stroke(hue, sat, brightness, opacity);
+          strokeWeight(end.active ? 1 : 0.5);
+          line(start.x, start.y, end.x, end.y);
+        }
+      }
+      
+      drawBackgroundGradient() {
+        // Create a subtle radial gradient
+        const gradientRadius = max(width, height);
+        for (let r = gradientRadius; r > 0; r -= 2) {
+          const brightness = map(r, 0, gradientRadius, 4, 8);
+          noStroke();
+          fill(230, 15, brightness, 0.01);
+          ellipse(width/2, height/2, r * 2);
+        }
+      }
+      
+      drawNodeInfo(node) {
+        const data = node.data;
+        const infoX = node.x + node.radius * 2.5;
+        const infoY = node.y;
+        
+        // Draw info panel background
+        fill(0, 0, 0, 0.7);
+        noStroke();
+        rectMode(CORNER);
+        rect(infoX - 10, infoY - 10, 220, 130, 10);
+        
+        // Draw info text
+        textAlign(LEFT, TOP);
+        fill(360, 0, 90);
+        textSize(16);
+        text(`Group Range: ${data.groupRange}`, infoX, infoY);
+        
+        textSize(14);
+        fill(360, 0, 80);
+        text(`Total Groups: ${data.avgTotal.toFixed(1)}`, infoX, infoY + 25);
+        
+        fill(120, 80, 90);
+        text(`Active Groups: ${data.avgActive.toFixed(1)}`, infoX, infoY + 50);
+        
+        fill(200, 50, 90);
+        text(`Inactive Groups: ${(data.avgTotal - data.avgActive).toFixed(1)}`, infoX, infoY + 75);
+        
+        fill(60, 90, 90);
+        text(`Activation Rate: ${data.activeRatio.toFixed(1)}%`, infoX, infoY + 100);
+      }
+      
+      checkHover(x, y) {
+        let hoveredNode = null;
+        
+        // Reset hover state
+        for (let node of this.nodes) {
+          node.hovering = false;
+        }
+        
+        // Check main nodes
+        for (let node of this.nodes) {
+          const d = dist(x, y, node.x, node.y);
+          if (d < node.radius) {
+            hoveredNode = node;
+            node.hovering = true;
+            break;
+          }
+        }
+        
+        this.hoverNode = hoveredNode;
+      }
+    }
+  </script>
+</body>
+</html>
