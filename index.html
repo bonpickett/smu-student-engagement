@@ -271,6 +271,8 @@
       update() {
         this.time += 0.01;
         
+        const isDimming = this.hoverMustang !== null;
+        
         // Update mustangs
         for (let mustang of this.mustangs) {
           mustang.x = lerp(mustang.x, mustang.targetX, 0.1);
@@ -297,48 +299,96 @@
         for (let group of this.activeGroups) {
           const parent = group.parentMustang;
           
-          // Follow parent mustang with a slight delay
-          group.angle += group.speed;
-          group.x = parent.x + cos(group.angle) * group.distance;
-          group.y = parent.y + sin(group.angle) * group.distance;
+          // Only move groups if their parent is not dimmed (either no mustang is hovered or this is the hovered mustang)
+          if (!isDimming || parent === this.hoverMustang) {
+            // Follow parent mustang with a slight delay
+            group.angle += group.speed;
+            group.x = parent.x + cos(group.angle) * group.distance;
+            group.y = parent.y + sin(group.angle) * group.distance;
+          }
         }
         
         // Update inactive groups
         for (let group of this.inactiveGroups) {
           const parent = group.parentMustang;
           
-          // Slow movement around parent mustang
-          group.angle += group.speed * 0.5;
-          group.x = parent.x + cos(group.angle) * group.distance;
-          group.y = parent.y + sin(group.angle) * group.distance;
+          // Only move groups if their parent is not dimmed (either no mustang is hovered or this is the hovered mustang)
+          if (!isDimming || parent === this.hoverMustang) {
+            // Slow movement around parent mustang
+            group.angle += group.speed * 0.5;
+            group.x = parent.x + cos(group.angle) * group.distance;
+            group.y = parent.y + sin(group.angle) * group.distance;
+          }
         }
       }
       
       display() {
-        // Draw SMU logo in background
+        // Draw background elements
         this.drawBackgroundElements();
+        
+        // Check if we need to apply dimming effect
+        const isDimming = this.hoverMustang !== null;
         
         // Draw inactive groups
         for (let group of this.inactiveGroups) {
           noStroke();
-          fill(group.colorRgb[0], group.colorRgb[1], group.colorRgb[2], 255 * group.opacity);
+          
+          // Apply dimming if needed
+          if (isDimming && group.parentMustang !== this.hoverMustang) {
+            // Dim inactive groups that don't belong to the hovered mustang
+            fill(group.colorRgb[0], group.colorRgb[1], group.colorRgb[2], 255 * group.opacity * 0.3);
+          } else {
+            fill(group.colorRgb[0], group.colorRgb[1], group.colorRgb[2], 255 * group.opacity);
+          }
+          
           ellipse(group.x, group.y, group.size);
         }
         
         // Draw active groups
         for (let group of this.activeGroups) {
           noStroke();
-          fill(group.colorRgb[0], group.colorRgb[1], group.colorRgb[2], 255 * group.opacity);
-          ellipse(group.x, group.y, group.size);
           
-          // Add glow to active groups
-          fill(group.colorRgb[0], group.colorRgb[1], group.colorRgb[2], 255 * group.opacity * 0.3);
-          ellipse(group.x, group.y, group.size * 1.5);
+          // Apply dimming if needed
+          if (isDimming && group.parentMustang !== this.hoverMustang) {
+            // Dim active groups that don't belong to the hovered mustang
+            fill(group.colorRgb[0], group.colorRgb[1], group.colorRgb[2], 255 * group.opacity * 0.3);
+            // Draw smaller glow for dimmed groups
+            fill(group.colorRgb[0], group.colorRgb[1], group.colorRgb[2], 255 * group.opacity * 0.1);
+            ellipse(group.x, group.y, group.size * 1.2);
+          } else {
+            fill(group.colorRgb[0], group.colorRgb[1], group.colorRgb[2], 255 * group.opacity);
+            // Add glow to active groups
+            fill(group.colorRgb[0], group.colorRgb[1], group.colorRgb[2], 255 * group.opacity * 0.3);
+            ellipse(group.x, group.y, group.size * 1.5);
+          }
+          
+          // Redraw the main circle to ensure proper layering
+          if (isDimming && group.parentMustang !== this.hoverMustang) {
+            fill(group.colorRgb[0], group.colorRgb[1], group.colorRgb[2], 255 * group.opacity * 0.3);
+          } else {
+            fill(group.colorRgb[0], group.colorRgb[1], group.colorRgb[2], 255 * group.opacity);
+          }
+          ellipse(group.x, group.y, group.size);
         }
         
         // Draw mustangs
         for (let mustang of this.mustangs) {
-          this.drawMustangSvg(mustang);
+          // Draw dimmed mustangs first (if any hovered)
+          if (isDimming && mustang !== this.hoverMustang) {
+            this.drawMustangSvg(mustang, true); // true = dimmed
+          }
+        }
+        
+        // Draw the hovered mustang last (on top)
+        if (this.hoverMustang) {
+          this.drawMustangSvg(this.hoverMustang, false); // false = not dimmed
+        }
+        
+        // If no mustang is hovered, draw all normally
+        if (!isDimming) {
+          for (let mustang of this.mustangs) {
+            this.drawMustangSvg(mustang, false);
+          }
         }
         
         // Draw hover information
@@ -386,7 +436,7 @@
         }
       }
       
-      drawMustangSvg(mustang) {
+      drawMustangSvg(mustang, dimmed = false) {
         push();
         translate(mustang.x, mustang.y + mustang.verticalOffset); // Add vertical offset for running motion
         
@@ -399,7 +449,15 @@
         }
         
         // Apply the color tint using RGB colors
-        if (mustang.hovering) {
+        if (dimmed) {
+          // Dim the mustang
+          tint(
+            mustang.colorRgb[0] * 0.6,
+            mustang.colorRgb[1] * 0.6,
+            mustang.colorRgb[2] * 0.6,
+            200 // Reduce opacity for dimmed mustangs
+          );
+        } else if (mustang.hovering) {
           // Make the mustang brighter when hovering
           tint(
             constrain(mustang.colorRgb[0] * 1.2, 0, 255),
@@ -438,7 +496,7 @@
           for (let i = -1; i <= 1; i++) {
             for (let j = -1; j <= 1; j++) {
               if (i !== 0 || j !== 0) { // Skip the center position
-                fill(0, 0, 0, 150);
+                fill(0, 0, 0, dimmed ? 50 : 150);
                 textSize(mustang.size * 0.20); // Increased text size
                 text(mustang.data.groupRange, mustang.x + i, groupTextY + j);
               }
@@ -446,7 +504,7 @@
           }
           
           // Main text - group range
-          fill(255, 255, 255, 255);
+          fill(255, 255, 255, dimmed ? 150 : 255);
           textSize(mustang.size * 0.20); // Increased text size
           text(mustang.data.groupRange, mustang.x, groupTextY);
           
@@ -458,26 +516,25 @@
           for (let i = -1; i <= 1; i++) {
             for (let j = -1; j <= 1; j++) {
               if (i !== 0 || j !== 0) {
-                fill(0, 0, 0, 150);
+                fill(0, 0, 0, dimmed ? 50 : 150);
                 text(`${mustang.data.activeRatio.toFixed(1)}%`, mustang.x + i, percentTextY + j);
               }
             }
           }
           
           // Main text - percentage
-          fill(this.smuYellow[0], this.smuYellow[1], this.smuYellow[2], 255);
+          fill(
+            this.smuYellow[0], 
+            this.smuYellow[1], 
+            this.smuYellow[2], 
+            dimmed ? 180 : 255
+          );
           text(`${mustang.data.activeRatio.toFixed(1)}%`, mustang.x, percentTextY);
           
           pop();
         }
         
-        // If hovering, add subtle highlight/glow
-        if (mustang.hovering) {
-          noFill();
-          stroke(255, 255, 255, 180);
-          strokeWeight(2);
-          ellipse(mustang.x, mustang.y, mustang.size * 1.5);
-        }
+        // Removed the white outline circle when hovering
       }
       
       drawMustangInfo(mustang) {
