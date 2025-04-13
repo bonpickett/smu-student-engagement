@@ -560,8 +560,8 @@
         fill(240);
         text(`Total Groups: ${data.avgTotal.toFixed(1)}`, infoX + 12, infoY + 42);
         
-        // Use SMU red for active groups
-        fill(204, 0, 53);
+        // Use a more readable color for active groups (light yellow instead of red)
+        fill(249, 220, 92); // Lighter yellow that's easier to read
         text(`Active Groups: ${data.avgActive.toFixed(1)}`, infoX + 12, infoY + 72);
         
         // Use SMU teal for inactive groups
