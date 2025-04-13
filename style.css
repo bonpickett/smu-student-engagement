@@ -1,3 +1,4 @@
+/* Base styles */
 body {
   margin: 0;
   padding: 0;
@@ -10,41 +11,43 @@ canvas {
   display: block;
 }
 
-.info {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 14px;
-  pointer-events: none;
-  max-width: 300px;
-  background-color: rgba(10, 35, 86, 0.8); /* SMU Blue with transparency */
-  padding: 10px 15px;
-  border-radius: 5px;
-  border-left: 4px solid #c8102e; /* SMU Red */
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.title {
+/* Info container styles */
+.info-container {
   position: absolute;
   top: 20px;
   left: 20px;
-  color: #c8102e; /* SMU Red */
+  max-width: 450px;
+  background-color: rgba(33, 46, 121, 0.85);
+  border-left: 4px solid #cc0035;
+  padding: 15px 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.title {
+  position: static;
   font-size: 28px;
+  color: #FFFFFF;
+  margin-bottom: 8px;
   font-weight: bold;
-  pointer-events: none;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  letter-spacing: 1px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .subtitle {
-  position: absolute;
-  top: 60px;
-  left: 20px;
+  position: static;
+  font-size: 18px;
   color: rgba(255, 255, 255, 0.9);
-  font-size: 16px;
-  pointer-events: none;
-  max-width: 450px;
+  margin-bottom: 12px;
   font-style: italic;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.info {
+  position: static;
+  color: rgba(249, 200, 14, 0.95); /* SMU Yellow */
+  font-size: 16px;
+  max-width: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding-top: 12px;
+  margin-top: 5px;
 }
