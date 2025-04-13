@@ -6,11 +6,9 @@ body {
   background-color: #0a2356; /* SMU Blue */
   font-family: 'Arial', sans-serif;
 }
-
 canvas {
   display: block;
 }
-
 /* Info container styles */
 .info-container {
   position: absolute;
@@ -24,7 +22,6 @@ canvas {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   z-index: 10;
 }
-
 .title {
   position: static;
   font-size: 28px;
@@ -33,7 +30,6 @@ canvas {
   font-weight: bold;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
-
 .subtitle {
   position: static;
   font-size: 18px;
@@ -41,7 +37,6 @@ canvas {
   margin-bottom: 12px;
   font-style: italic;
 }
-
 .info {
   position: static;
   color: rgba(249, 200, 14, 0.95); /* SMU Yellow */
