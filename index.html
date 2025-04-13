@@ -355,7 +355,7 @@
         textStyle(BOLD);
         
         // Draw white outline text for better visibility against any background
-        const textY = mustang.y + mustang.size * 0.6;
+        let groupTextY = mustang.y + mustang.size * 0.6;
         
         // Draw text outline/shadow for better readability
         for (let i = -1; i <= 1; i++) {
@@ -363,7 +363,7 @@
             if (i !== 0 || j !== 0) { // Skip the center position
               fill(0, 0, 0, 150);
               textSize(mustang.size * 0.17);
-              text(mustang.data.groupRange, mustang.x + i, textY + j);
+              text(mustang.data.groupRange, mustang.x + i, groupTextY + j);
             }
           }
         }
@@ -371,10 +371,10 @@
         // Main text - group range
         fill(255, 255, 255, 255);
         textSize(mustang.size * 0.17);
-        text(mustang.data.groupRange, mustang.x, textY);
+        text(mustang.data.groupRange, mustang.x, groupTextY);
         
         // Activation percentage with similar outline technique
-        textY += mustang.size * 0.2;
+        let percentTextY = groupTextY + mustang.size * 0.2;
         textSize(mustang.size * 0.14);
         
         // Outline/shadow for percentage
@@ -382,14 +382,14 @@
           for (let j = -1; j <= 1; j++) {
             if (i !== 0 || j !== 0) {
               fill(0, 0, 0, 150);
-              text(`${mustang.data.activeRatio.toFixed(1)}%`, mustang.x + i, textY + j);
+              text(`${mustang.data.activeRatio.toFixed(1)}%`, mustang.x + i, percentTextY + j);
             }
           }
         }
         
         // Main text - percentage
         fill(this.smuYellow[0], this.smuYellow[1], this.smuYellow[2], 255);
-        text(`${mustang.data.activeRatio.toFixed(1)}%`, mustang.x, textY);
+        text(`${mustang.data.activeRatio.toFixed(1)}%`, mustang.x, percentTextY);
         
         pop();
         
