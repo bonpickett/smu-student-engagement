@@ -350,20 +350,30 @@
         textStyle(BOLD);
         
         // Create a semi-transparent background for the text to make it more readable
+        // Increased opacity from 128 (50%) to 204 (80%) for better readability
         noStroke();
-        fill(0, 0, 0, 128);
+        fill(20, 20, 40, 204); // Dark background with higher opacity (80%)
         const textBoxSize = mustang.size * 0.5;
         const textY = mustang.y + mustang.size * 0.6;
         rectMode(CENTER);
         rect(mustang.x, textY + mustang.size * 0.1, textBoxSize, mustang.size * 0.3, 10);
         
-        // Draw the text
-        fill(255);
+        // Add subtle border to the text box for better definition
+        stroke(255, 255, 255, 100);
+        strokeWeight(1);
+        noFill();
+        rect(mustang.x, textY + mustang.size * 0.1, textBoxSize, mustang.size * 0.3, 10);
+        
+        // Draw the text with improved contrast
+        noStroke();
+        fill(255, 255, 255, 240); // Slightly off-white for better contrast
         textSize(mustang.size * 0.18);
         text(mustang.data.groupRange, mustang.x, textY);
         
         // Show activation ratio
         textSize(mustang.size * 0.14);
+        // Use SMU Yellow for the activation percentage to make it stand out
+        fill(this.smuYellow[0], this.smuYellow[1], this.smuYellow[2], 240);
         text(`${mustang.data.activeRatio.toFixed(1)}%`, mustang.x, textY + mustang.size * 0.2);
         pop();
         
@@ -381,8 +391,8 @@
         const infoX = mustang.x + mustang.size;
         const infoY = mustang.y - mustang.size * 0.5;
         
-        // Draw info panel background
-        fill(53, 76, 161, 230); // SMU Blue background
+        // Draw info panel background with increased opacity
+        fill(33, 46, 121, 245); // Darker SMU Blue background with 96% opacity
         stroke(204, 0, 53);
         strokeWeight(2);
         rectMode(CORNER);
