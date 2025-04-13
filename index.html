@@ -126,13 +126,13 @@
       }
       
       initializeVisualization() {
-        // Create a grid layout for mustangs
+        // Create a grid layout for mustangs with increased spacing
         const rows = 3;
         const cols = 5;
         const totalMustangs = this.studentData.length;
         
-        const gridSpacingX = windowWidth * 0.7 / (cols - 1);
-        const gridSpacingY = windowHeight * 0.6 / (rows - 1);
+        const gridSpacingX = windowWidth * 0.8 / (cols - 1); // Increased from 0.7 to 0.8
+        const gridSpacingY = windowHeight * 0.7 / (rows - 1); // Increased from 0.6 to 0.7
         const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
         const startY = this.centerY - (gridSpacingY * (rows - 1)) / 2;
         
@@ -175,7 +175,8 @@
           const activeCount = ceil(mustang.data.avgActive);
           for (let j = 0; j < activeCount; j++) {
             const angle = random(TWO_PI);
-            const radius = mustang.size * 1.5 * random(0.8, 1.2);
+            // Increased orbit radius for better spacing between mustangs' dots
+            const radius = mustang.size * 1.2 * random(0.8, 1.2);
             const activeGroup = {
               x: mustang.x + cos(angle) * radius,
               y: mustang.y + sin(angle) * radius,
@@ -196,7 +197,8 @@
           
           for (let j = 0; j < inactiveDisplayCount; j++) {
             const angle = random(TWO_PI);
-            const radius = mustang.size * 1.2 * random(0.8, 1.2);
+            // Decreased orbit radius to keep inactive dots closer to their mustang
+            const radius = mustang.size * 0.9 * random(0.8, 1.2);
             const inactiveGroup = {
               x: mustang.x + cos(angle) * radius,
               y: mustang.y + sin(angle) * radius,
@@ -217,12 +219,12 @@
         this.centerX = windowWidth / 2;
         this.centerY = windowHeight / 2;
         
-        // Recalculate grid layout
+        // Recalculate grid layout with increased spacing
         const rows = 3;
         const cols = 5;
         
-        const gridSpacingX = windowWidth * 0.7 / (cols - 1);
-        const gridSpacingY = windowHeight * 0.6 / (rows - 1);
+        const gridSpacingX = windowWidth * 0.8 / (cols - 1); // Increased from 0.7 to 0.8
+        const gridSpacingY = windowHeight * 0.7 / (rows - 1); // Increased from 0.6 to 0.7
         const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
         const startY = this.centerY - (gridSpacingY * (rows - 1)) / 2;
         
@@ -351,49 +353,53 @@
         
         pop();
         
-        // Add text for group count range directly below without box
-        push();
-        textAlign(CENTER, CENTER);
-        textStyle(BOLD);
-        
-        // Draw white outline text for better visibility against any background
-        let groupTextY = mustang.y + mustang.size * 0.6;
-        
-        // Draw text outline/shadow for better readability
-        for (let i = -1; i <= 1; i++) {
-          for (let j = -1; j <= 1; j++) {
-            if (i !== 0 || j !== 0) { // Skip the center position
-              fill(0, 0, 0, 150);
-              textSize(mustang.size * 0.20); // Increased text size
-              text(mustang.data.groupRange, mustang.x + i, groupTextY + j);
+        // Only display text information if this mustang is not hovering 
+        // or if this is the currently hovered mustang
+        if (!this.hoverMustang || mustang === this.hoverMustang) {
+          // Add text for group count range directly below without box
+          push();
+          textAlign(CENTER, CENTER);
+          textStyle(BOLD);
+          
+          // Draw white outline text for better visibility against any background
+          let groupTextY = mustang.y + mustang.size * 0.6;
+          
+          // Draw text outline/shadow for better readability
+          for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+              if (i !== 0 || j !== 0) { // Skip the center position
+                fill(0, 0, 0, 150);
+                textSize(mustang.size * 0.20); // Increased text size
+                text(mustang.data.groupRange, mustang.x + i, groupTextY + j);
+              }
             }
           }
-        }
-        
-        // Main text - group range
-        fill(255, 255, 255, 255);
-        textSize(mustang.size * 0.20); // Increased text size
-        text(mustang.data.groupRange, mustang.x, groupTextY);
-        
-        // Activation percentage with similar outline technique
-        let percentTextY = groupTextY + mustang.size * 0.22;
-        textSize(mustang.size * 0.16); // Increased text size
-        
-        // Outline/shadow for percentage
-        for (let i = -1; i <= 1; i++) {
-          for (let j = -1; j <= 1; j++) {
-            if (i !== 0 || j !== 0) {
-              fill(0, 0, 0, 150);
-              text(`${mustang.data.activeRatio.toFixed(1)}%`, mustang.x + i, percentTextY + j);
+          
+          // Main text - group range
+          fill(255, 255, 255, 255);
+          textSize(mustang.size * 0.20); // Increased text size
+          text(mustang.data.groupRange, mustang.x, groupTextY);
+          
+          // Activation percentage with similar outline technique
+          let percentTextY = groupTextY + mustang.size * 0.22;
+          textSize(mustang.size * 0.16); // Increased text size
+          
+          // Outline/shadow for percentage
+          for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+              if (i !== 0 || j !== 0) {
+                fill(0, 0, 0, 150);
+                text(`${mustang.data.activeRatio.toFixed(1)}%`, mustang.x + i, percentTextY + j);
+              }
             }
           }
+          
+          // Main text - percentage
+          fill(this.smuYellow[0], this.smuYellow[1], this.smuYellow[2], 255);
+          text(`${mustang.data.activeRatio.toFixed(1)}%`, mustang.x, percentTextY);
+          
+          pop();
         }
-        
-        // Main text - percentage
-        fill(this.smuYellow[0], this.smuYellow[1], this.smuYellow[2], 255);
-        text(`${mustang.data.activeRatio.toFixed(1)}%`, mustang.x, percentTextY);
-        
-        pop();
         
         // If hovering, add subtle highlight/glow
         if (mustang.hovering) {
