@@ -100,8 +100,8 @@
         this.hoverMustang = null;
         this.time = 0;
         
-        // Animation settings - increased speed from previous version
-        this.animationSpeed = 0.8; // Faster animation
+        // Animation settings - smoother motion
+        this.animationSpeed = 0.6; // Reduced from 0.8 for smoother motion
         
         this.initializeVisualization();
       }
@@ -178,8 +178,9 @@
             data: this.studentData[i],
             colorRgb: colorRgb,
             angle: 0,
-            galloping: 0,
-            gallopSpeed: random(0.04, 0.06) * this.animationSpeed, // Faster animation
+            verticalOffset: 0, // For running animation - vertical component
+            tiltAngle: 0,      // For running animation - rotational component
+            gallopSpeed: random(0.04, 0.05) * this.animationSpeed, // Smoother animation
             hovering: false,
             row: row,
             col: col,
@@ -275,15 +276,21 @@
           mustang.x = lerp(mustang.x, mustang.targetX, 0.1);
           mustang.y = lerp(mustang.y, mustang.targetY, 0.1);
           
-          // Galloping animation - more like a gentle rocking motion
-          // Using a smoother curve with less extreme values
-          mustang.galloping = sin(this.time * mustang.gallopSpeed * 5) * 0.6;
+          // Smooth running animation instead of rocking/galloping
+          // Use a combination of vertical and rotational movement for a natural running look
+          const runCycle = this.time * mustang.gallopSpeed * 3;
           
-          // If hovering, make the mustang slightly more animated but still smooth
+          // Vertical movement component - slight up and down
+          mustang.verticalOffset = sin(runCycle) * 2.5;
+          
+          // Forward tilt component - slight forward/backward tilt
+          mustang.tiltAngle = sin(runCycle - PI/6) * 0.02; // Phase offset for more natural motion
+          
+          // If hovering, make the mustang run a bit faster but still smooth
           if (mustang.hovering) {
-            mustang.gallopSpeed = 0.08 * this.animationSpeed;
+            mustang.gallopSpeed = 0.07 * this.animationSpeed;
           } else {
-            mustang.gallopSpeed = random(0.04, 0.06) * this.animationSpeed;
+            mustang.gallopSpeed = random(0.04, 0.05) * this.animationSpeed;
           }
         }
         
@@ -382,12 +389,10 @@
       
       drawMustangSvg(mustang) {
         push();
-        translate(mustang.x, mustang.y);
+        translate(mustang.x, mustang.y + mustang.verticalOffset); // Add vertical offset for running motion
         
-        // Apply gentler rocking animation
-        // This is more subtle and feels like a rocking horse
-        const gallopAmount = mustang.galloping;
-        rotate(gallopAmount * 0.05); // Reduced rotation for subtle effect
+        // Apply smooth running animation with slight tilt
+        rotate(mustang.tiltAngle);
         
         // Flip horizontally if needed
         if (mustang.flipX) {
