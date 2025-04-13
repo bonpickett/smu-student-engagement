@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Engagement Data Art</title>
+  <title>SMU Mustangs Student Engagement Visualization</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="title">Constellation of Student Engagement</div>
-  <div class="subtitle">Visual representation of how students connect with campus groups</div>
-  <div class="info">Hover over elements to explore the data. Each "star" represents a student group count range.</div>
+  <div class="title">SMU Mustangs Engagement Constellation</div>
+  <div class="subtitle">Class of 2026: Visualizing how Mustang students connect with campus groups</div>
+  <div class="info">Hover over stars to explore the data patterns. Each star system represents a different range of student group memberships.</div>
 
   <script>
     function setup() {
@@ -20,7 +20,7 @@
       frameRate(30);
       
       // Initialize the visualization
-      dataArt = new StudentEngagementArt();
+      dataArt = new MustangsEngagementArt();
     }
 
     function draw() {
@@ -38,7 +38,7 @@
       dataArt.checkHover(mouseX, mouseY);
     }
 
-    class StudentEngagementArt {
+    class MustangsEngagementArt {
       constructor() {
         this.studentData = [
           { groupRange: "0-5", avgTotal: 3.8, avgActive: 0.1, activeRatio: 1.7 },
@@ -58,6 +58,10 @@
           { groupRange: "70+", avgTotal: 79.0, avgActive: 7.0, activeRatio: 8.4 }
         ];
         
+        // SMU colors
+        this.smuRed = [0, 80, 90]; // HSB equivalent of SMU red
+        this.smuBlue = [220, 80, 90]; // HSB equivalent of SMU blue
+        
         this.nodes = [];
         this.connections = [];
         this.activeNodes = [];
@@ -67,8 +71,31 @@
         this.maxRadius = min(windowWidth, windowHeight) * 0.4;
         this.hoverNode = null;
         this.time = 0;
+        this.mustangElements = [];
         
         this.initializeVisualization();
+        this.createMustangElements();
+      }
+      
+      createMustangElements() {
+        // Create decorative elements representing mustang silhouettes
+        const numElements = 7;
+        const angleStep = TWO_PI / numElements;
+        
+        for (let i = 0; i < numElements; i++) {
+          const angle = angleStep * i;
+          const radius = this.maxRadius * 1.4;
+          
+          this.mustangElements.push({
+            x: this.centerX + cos(angle) * radius,
+            y: this.centerY + sin(angle) * radius,
+            size: random(20, 40),
+            angle: angle,
+            speed: random(0.0005, 0.001),
+            oscillationSpeed: random(0.01, 0.02),
+            oscillationAmount: random(5, 15)
+          });
+        }
       }
       
       initializeVisualization() {
@@ -79,6 +106,10 @@
           const x = this.centerX + cos(angle) * radius;
           const y = this.centerY + sin(angle) * radius;
           
+          // Use SMU colors - high activation = red, low activation = blue
+          const hue = map(this.studentData[i].activeRatio, 0, 35, this.smuBlue[0], this.smuRed[0]);
+          const saturation = map(this.studentData[i].activeRatio, 0, 35, this.smuBlue[1], this.smuRed[1]);
+          
           const node = {
             x: x,
             y: y,
@@ -86,9 +117,9 @@
             targetY: y,
             radius: map(log(this.studentData[i].avgTotal), 0, log(80), 15, 40),
             data: this.studentData[i],
-            hue: map(this.studentData[i].activeRatio, 0, 35, 200, 60),
-            brightness: map(this.studentData[i].activeRatio, 0, 35, 50, 90),
-            saturation: 80,
+            hue: hue,
+            brightness: 85,
+            saturation: saturation,
             angle: angle,
             baseRadius: radius,
             hovering: false
@@ -102,7 +133,7 @@
           const activeCount = node.data.avgActive;
           const inactiveCount = node.data.avgTotal - node.data.avgActive;
           
-          // Create active nodes
+          // Create active nodes - using SMU red
           const activeNodeCount = ceil(activeCount);
           for (let i = 0; i < activeNodeCount; i++) {
             const angle = node.angle + random(-PI/4, PI/4);
@@ -113,9 +144,9 @@
               radius: 4,
               parentNode: node,
               active: true,
-              hue: 120,
-              saturation: 80,
-              brightness: 90,
+              hue: this.smuRed[0],
+              saturation: this.smuRed[1],
+              brightness: this.smuRed[2],
               opacity: i < activeCount ? 1 : 0.3, // Partial opacity for fractional counts
               angle: angle,
               distance: distance,
@@ -131,7 +162,7 @@
             });
           }
           
-          // Create inactive nodes
+          // Create inactive nodes - using SMU blue
           const inactiveNodeCount = ceil(inactiveCount);
           const inactiveDisplayCount = min(inactiveNodeCount, 40); // Limit for visual clarity
           
@@ -144,9 +175,9 @@
               radius: 2,
               parentNode: node,
               active: false,
-              hue: 200,
-              saturation: 30,
-              brightness: 70,
+              hue: this.smuBlue[0],
+              saturation: this.smuBlue[1],
+              brightness: this.smuBlue[2],
               opacity: i < inactiveCount ? 0.6 : 0.2, // Partial opacity for fractional counts
               angle: angle,
               distance: distance,
@@ -176,6 +207,14 @@
           node.targetX = this.centerX + cos(node.angle) * radius;
           node.targetY = this.centerY + sin(node.angle) * radius;
           node.baseRadius = radius;
+        }
+        
+        // Reposition mustang elements
+        for (let i = 0; i < this.mustangElements.length; i++) {
+          const element = this.mustangElements[i];
+          const radius = this.maxRadius * 1.4;
+          element.x = this.centerX + cos(element.angle) * radius;
+          element.y = this.centerY + sin(element.angle) * radius;
         }
       }
       
@@ -216,11 +255,23 @@
           node.x = parent.x + cos(node.angle) * (node.distance + drift);
           node.y = parent.y + sin(node.angle) * (node.distance + drift);
         }
+        
+        // Update mustang elements
+        for (let element of this.mustangElements) {
+          element.angle += element.speed;
+          const oscillation = sin(this.time * element.oscillationSpeed) * element.oscillationAmount;
+          const radius = this.maxRadius * 1.4 + oscillation;
+          element.x = this.centerX + cos(element.angle) * radius;
+          element.y = this.centerY + sin(element.angle) * radius;
+        }
       }
       
       display() {
         // Draw background gradient
         this.drawBackgroundGradient();
+        
+        // Draw mustang silhouettes in the background
+        this.drawMustangElements();
         
         // Draw connections
         this.drawConnections();
@@ -268,6 +319,63 @@
         if (this.hoverNode) {
           this.drawNodeInfo(this.hoverNode);
         }
+        
+        // Draw SMU logo
+        this.drawSMULogo();
+      }
+      
+      drawMustangElements() {
+        for (let element of this.mustangElements) {
+          push();
+          translate(element.x, element.y);
+          rotate(element.angle + PI/2);
+          
+          // Draw a stylized mustang silhouette
+          noStroke();
+          fill(0, 0, 40, 0.2);
+          
+          // Simple mustang shape
+          beginShape();
+          vertex(-element.size/3, -element.size/2);    // Head top
+          vertex(element.size/3, -element.size/4);     // Mane
+          vertex(element.size/3, element.size/4);      // Back
+          vertex(0, element.size/2);                  // Tail
+          vertex(-element.size/4, element.size/4);     // Legs
+          vertex(-element.size/3, -element.size/2);    // Back to head
+          endShape(CLOSE);
+          
+          pop();
+        }
+      }
+      
+      drawSMULogo() {
+        // Draw a simplified SMU logo in the bottom right corner
+        const size = 60;
+        const x = width - size - 20;
+        const y = height - size - 20;
+        
+        noStroke();
+        fill(this.smuRed[0], this.smuRed[1], this.smuRed[2], 0.9);
+        
+        // Draw a simplified SMU shield
+        beginShape();
+        vertex(x, y);
+        vertex(x + size, y);
+        vertex(x + size, y + size * 0.8);
+        vertex(x + size/2, y + size);
+        vertex(x, y + size * 0.8);
+        endShape(CLOSE);
+        
+        // Text "SMU"
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(size * 0.4);
+        textStyle(BOLD);
+        text("SMU", x + size/2, y + size * 0.4);
+        
+        // Text "2026"
+        textSize(size * 0.25);
+        text("2026", x + size/2, y + size * 0.65);
       }
       
       drawConnections() {
@@ -280,10 +388,10 @@
           const maxDist = 150;
           const opacity = map(min(d, maxDist), 0, maxDist, conn.strength, 0.05);
           
-          // Active connections are green, inactive are blue
-          const hue = end.active ? 120 : 200;
-          const sat = end.active ? 60 : 30;
-          const brightness = end.active ? 80 : 60;
+          // Active connections are red, inactive are blue (SMU colors)
+          const hue = end.active ? this.smuRed[0] : this.smuBlue[0];
+          const sat = end.active ? this.smuRed[1] : this.smuBlue[1];
+          const brightness = end.active ? this.smuRed[2] : this.smuBlue[2];
           
           stroke(hue, sat, brightness, opacity);
           strokeWeight(end.active ? 1 : 0.5);
@@ -292,12 +400,14 @@
       }
       
       drawBackgroundGradient() {
-        // Create a subtle radial gradient
+        // Create a subtle radial gradient with SMU-inspired dark blue background
+        background(220, 60, 8); // Dark blue
+        
         const gradientRadius = max(width, height);
         for (let r = gradientRadius; r > 0; r -= 2) {
-          const brightness = map(r, 0, gradientRadius, 4, 8);
+          const brightness = map(r, 0, gradientRadius, 4, 12);
           noStroke();
-          fill(230, 15, brightness, 0.01);
+          fill(220, 50, brightness, 0.01);
           ellipse(width/2, height/2, r * 2);
         }
       }
@@ -307,13 +417,15 @@
         const infoX = node.x + node.radius * 2.5;
         const infoY = node.y;
         
-        // Draw info panel background
-        fill(0, 0, 0, 0.7);
-        noStroke();
+        // Draw info panel background with SMU styling
+        fill(220, 60, 15, 0.9); // Dark blue background
+        stroke(this.smuRed[0], this.smuRed[1], this.smuRed[2]);
+        strokeWeight(2);
         rectMode(CORNER);
-        rect(infoX - 10, infoY - 10, 220, 130, 10);
+        rect(infoX - 10, infoY - 10, 220, 150, 10);
         
         // Draw info text
+        noStroke();
         textAlign(LEFT, TOP);
         fill(360, 0, 90);
         textSize(16);
@@ -323,14 +435,23 @@
         fill(360, 0, 80);
         text(`Total Groups: ${data.avgTotal.toFixed(1)}`, infoX, infoY + 25);
         
-        fill(120, 80, 90);
+        // Use SMU red for active groups
+        fill(this.smuRed[0], this.smuRed[1], this.smuRed[2]);
         text(`Active Groups: ${data.avgActive.toFixed(1)}`, infoX, infoY + 50);
         
-        fill(200, 50, 90);
+        // Use SMU blue for inactive groups
+        fill(this.smuBlue[0], this.smuBlue[1], this.smuBlue[2]);
         text(`Inactive Groups: ${(data.avgTotal - data.avgActive).toFixed(1)}`, infoX, infoY + 75);
         
-        fill(60, 90, 90);
+        fill(360, 0, 90);
         text(`Activation Rate: ${data.activeRatio.toFixed(1)}%`, infoX, infoY + 100);
+        
+        // Add SMU tagline
+        fill(this.smuRed[0], this.smuRed[1], this.smuRed[2], 0.8);
+        textStyle(ITALIC);
+        textSize(10);
+        text("World Changers Shaped Here", infoX, infoY + 130);
+        textStyle(NORMAL);
       }
       
       checkHover(x, y) {
