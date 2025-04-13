@@ -16,7 +16,7 @@ canvas {
   top: 0;
   left: 0;
   width: 100%;
-  background-color: rgba(33, 46, 121, 0.9);
+  background-color: rgba(0, 0, 0, 0.6); /* Changed to semi-transparent black */
   padding: 15px 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   z-index: 10;
@@ -39,7 +39,7 @@ canvas {
   font-style: italic;
 }
 .info {
-  color: rgba(249, 200, 14, 0.95); /* SMU Yellow */
+  color: rgba(255, 255, 255, 0.95); /* Changed from yellow to white */
   font-size: 16px;
   max-width: 800px;
   text-align: center;
