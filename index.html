@@ -14,6 +14,15 @@
 
   <script>
     let dataArt;
+    let mustangLogo;
+    let mustangAltLogo;
+
+    function preload() {
+      // Load the SMU mustang logos
+      // Replace with actual image paths if needed
+      mustangLogo = loadImage('mustang_logo.png');
+      mustangAltLogo = loadImage('mustang_alt_logo.png');
+    }
 
     function setup() {
       createCanvas(windowWidth, windowHeight);
@@ -118,7 +127,9 @@
             gallopSpeed: random(0.05, 0.1),
             hovering: false,
             row: row,
-            col: col
+            col: col,
+            // Use the main logo for most, and alt logo for some variety
+            useAltLogo: random() > 0.7
           };
           
           this.mustangs.push(mustang);
@@ -257,7 +268,7 @@
         
         // Draw mustangs
         for (let mustang of this.mustangs) {
-          this.drawMustang(mustang);
+          this.drawMustangLogo(mustang);
         }
         
         // Draw hover information
@@ -277,89 +288,43 @@
         textStyle(BOLD);
         textSize(width * 0.3);
         text("SMU", this.centerX, this.centerY);
-        
-        // Draw a subtle Mustang silhouette in the background
-        fill(220, 30, 30, 0.05);
-        this.drawLargeMustangSilhouette();
       }
       
-      drawLargeMustangSilhouette() {
-        push();
-        translate(this.centerX, this.centerY);
-        
-        const s = min(width, height) * 0.6; // Large silhouette size
-        
-        beginShape();
-        // Simplified large mustang shape
-        vertex(-s*0.3, -s*0.2);
-        vertex(-s*0.1, -s*0.25);
-        vertex(s*0.1, -s*0.2);
-        vertex(s*0.3, -s*0.1);
-        vertex(s*0.25, s*0.1);
-        vertex(s*0.1, s*0.2);
-        vertex(-s*0.1, s*0.15);
-        vertex(-s*0.25, s*0.1);
-        vertex(-s*0.3, -s*0.2);
-        endShape(CLOSE);
-        
-        pop();
-      }
-      
-      drawMustang(mustang) {
+      drawMustangLogo(mustang) {
         push();
         translate(mustang.x, mustang.y);
         
-        // Apply galloping animation
-        const gallopAmount = mustang.galloping * 5;
+        // Apply slight animation/movement
+        const gallopAmount = mustang.galloping * 2;
         rotate(gallopAmount * 0.03);
         
-        // Draw mustang silhouette
-        noStroke();
-        fill(mustang.hue, mustang.saturation, mustang.brightness, 0.9);
+        // Apply color tint based on activation ratio
+        tint(mustang.hue, mustang.saturation, mustang.brightness);
         
-        // Mustang body
-        const s = mustang.size; // Base size
+        // Choose which logo to use
+        const logo = mustang.useAltLogo ? mustangAltLogo : mustangLogo;
         
-        // Draw the mustang with galloping effect
-        beginShape();
-        // Head & neck
-        vertex(-s*0.5, -s*0.3);
-        vertex(-s*0.3, -s*0.4 + gallopAmount);
-        vertex(-s*0.1, -s*0.3 + gallopAmount);
-        // Back
-        vertex(s*0.1, -s*0.25 + gallopAmount*0.5);
-        vertex(s*0.3, -s*0.2 + gallopAmount*0.5);
-        // Tail
-        vertex(s*0.4, -s*0.1);
-        vertex(s*0.5, s*0.1 - gallopAmount*0.5);
-        // Rear legs
-        vertex(s*0.3, s*0.3 - gallopAmount);
-        vertex(s*0.2, s*0.4 - gallopAmount);
-        // Body bottom
-        vertex(0, s*0.3 - gallopAmount*0.5);
-        // Front legs
-        vertex(-s*0.2, s*0.4 - gallopAmount*1.5);
-        vertex(-s*0.3, s*0.3 - gallopAmount*1.5);
-        // Return to neck
-        vertex(-s*0.4, s*0.1 - gallopAmount);
-        vertex(-s*0.5, -s*0.3);
-        endShape(CLOSE);
+        // Draw the mustang logo
+        imageMode(CENTER);
+        image(logo, 0, 0, mustang.size, mustang.size * (logo.height / logo.width));
         
-        // Add highlight
-        fill(mustang.hue, mustang.saturation - 10, mustang.brightness + 10, 0.5);
-        ellipse(-s*0.3, -s*0.2, s*0.3);
+        // Turn off tint after drawing
+        noTint();
         
         // Add text for group count range
         if (mustang.size > 60) {
           textAlign(CENTER, CENTER);
           textStyle(BOLD);
           fill(255);
-          textSize(s * 0.2);
-          text(mustang.data.groupRange, 0, 0);
+          
+          // Position text below the logo
+          const textY = mustang.size * 0.6;
+          textSize(mustang.size * 0.2);
+          text(mustang.data.groupRange, 0, textY);
           
           // Show activation ratio
-          textSize(s * 0.15);
-          text(`${mustang.data.activeRatio.toFixed(1)}%`, 0, s * 0.2);
+          textSize(mustang.size * 0.15);
+          text(`${mustang.data.activeRatio.toFixed(1)}%`, 0, textY + mustang.size * 0.2);
         }
         
         pop();
