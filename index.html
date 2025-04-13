@@ -37,7 +37,7 @@
     }
 
     function draw() {
-      background(53, 76, 161); // SMU Blue background
+      // No background here - we'll handle it in the drawBackgroundElements method
       
       if (dataArt) {
         dataArt.update();
@@ -342,13 +342,42 @@
       }
       
       drawBackgroundElements() {
-        // Draw a large SMU in the background
+        // Create a modern gradient background with subtle grid pattern
+        const gradientTop = color(53, 76, 161); // SMU Blue
+        const gradientBottom = color(33, 46, 121); // Darker SMU Blue
+        
+        // Draw the gradient
+        for(let y = 0; y < height; y++) {
+          const inter = map(y, 0, height, 0, 1);
+          const c = lerpColor(gradientTop, gradientBottom, inter);
+          stroke(c);
+          line(0, y, width, y);
+        }
+        
+        // Draw subtle grid lines
+        stroke(255, 255, 255, 10);
+        strokeWeight(1);
+        
+        // Horizontal grid lines
+        const gridSpacingY = height / 15;
+        for (let y = 0; y <= height; y += gridSpacingY) {
+          line(0, y, width, y);
+        }
+        
+        // Vertical grid lines
+        const gridSpacingX = width / 15;
+        for (let x = 0; x <= width; x += gridSpacingX) {
+          line(x, 0, x, height);
+        }
+        
+        // Add subtle circular elements in background
         noStroke();
-        fill(255, 255, 255, 15); // Subtle white text
-        textAlign(CENTER, CENTER);
-        textStyle(BOLD);
-        textSize(width * 0.3);
-        text("SMU", this.centerX, this.centerY);
+        for (let i = 0; i < 5; i++) {
+          const circleSize = width * (0.1 + i * 0.05);
+          const opacity = 5 - i; // Decreasing opacity for outer circles
+          fill(255, 255, 255, opacity);
+          ellipse(this.centerX, this.centerY, circleSize);
+        }
       }
       
       drawMustangSvg(mustang) {
