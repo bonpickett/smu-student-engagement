@@ -510,6 +510,9 @@ class MustangsEngagementArt {
   drawBackgroundElements() {
     const p = this.p;
     
+    // Clear the canvas first
+    p.clear();
+    
     // Create a gradient background from red to blue
     const gradientTop = p.color(204, 0, 53); // SMU Red at the top
     const gradientBottom = p.color(33, 46, 121); // Darker SMU Blue at the bottom
