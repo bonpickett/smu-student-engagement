@@ -229,23 +229,23 @@ class MustangsEngagementArt {
   getColorFromPalette(ratio) {
     const p = this.p;
     
-    // For 2026 data (has lower ratios)
+    // Define max ratio differently for each class
     const maxRatio = this.studentData === class2026Data ? 35 : 100;
     
-    // Adjust the mapping for very low values (like in 2026 data)
+    // Ensure very low values in 2026 data still show a color gradient
     let normalizedRatio;
-    if (ratio < 10 && this.studentData === class2026Data) {
-      // For the very low values in 2026 data, keep them whiter
-      normalizedRatio = ratio / 60;
-    } else if (ratio < 30) {
-      // Keep values below 30% as white or very close to white
-      normalizedRatio = ratio / 120;
+    if (this.studentData === class2026Data) {
+      // For 2026 data, scale up the ratio to show more color variation
+      normalizedRatio = p.constrain(ratio / maxRatio, 0, 1);
     } else {
-      // Transition more quickly after 30%
-      normalizedRatio = 0.25 + ((ratio - 30) / 70) * 0.75;
+      // For 2025 data, use the same approach as before
+      if (ratio < 30) {
+        normalizedRatio = ratio / 120;
+      } else {
+        normalizedRatio = 0.25 + ((ratio - 30) / 70) * 0.75;
+      }
+      normalizedRatio = p.constrain(normalizedRatio, 0, 1);
     }
-    
-    normalizedRatio = p.constrain(normalizedRatio, 0, 1);
     
     // Calculate which segment of the palette we're in
     const segments = this.colorPalette.length - 1;
