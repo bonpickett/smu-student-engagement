@@ -13,7 +13,8 @@ canvas {
 .info-container {
   position: absolute;
   top: 20px;
-  right: 20px; /* Changed from left to right */
+  left: 50%;
+  transform: translateX(-50%);
   max-width: 450px;
   background-color: rgba(33, 46, 121, 0.85);
   border-left: 4px solid #cc0035;

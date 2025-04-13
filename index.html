@@ -134,7 +134,9 @@
         const gridSpacingX = windowWidth * 0.8 / (cols - 1); // Increased from 0.7 to 0.8
         const gridSpacingY = windowHeight * 0.7 / (rows - 1); // Increased from 0.6 to 0.7
         const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
-        const startY = this.centerY - (gridSpacingY * (rows - 1)) / 2;
+        
+        // Move the entire grid down a bit to avoid overlap with the title box
+        const startY = this.centerY - (gridSpacingY * (rows - 1)) / 2 + windowHeight * 0.05;
         
         // Create mustangs for each student group range
         for (let i = 0; i < totalMustangs; i++) {
@@ -226,7 +228,9 @@
         const gridSpacingX = windowWidth * 0.8 / (cols - 1); // Increased from 0.7 to 0.8
         const gridSpacingY = windowHeight * 0.7 / (rows - 1); // Increased from 0.6 to 0.7
         const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
-        const startY = this.centerY - (gridSpacingY * (rows - 1)) / 2;
+        
+        // Move the entire grid down a bit to avoid overlap with the title box
+        const startY = this.centerY - (gridSpacingY * (rows - 1)) / 2 + windowHeight * 0.05;
         
         // Reposition mustangs
         for (let i = 0; i < this.mustangs.length; i++) {
