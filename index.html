@@ -26,7 +26,7 @@
     }
 
     function draw() {
-      background(220, 60, 8); // SMU Blue
+      background(220, 60, 8); // SMU Blue background
       dataArt.update();
       dataArt.display();
     }
@@ -65,7 +65,6 @@
         this.smuBlue = [220, 80, 90];
         
         this.mustangs = [];
-        this.students = [];
         this.activeGroups = [];
         this.inactiveGroups = [];
         this.centerX = windowWidth / 2;
@@ -73,56 +72,29 @@
         this.maxRadius = min(windowWidth, windowHeight) * 0.4;
         this.hoverMustang = null;
         this.time = 0;
-        this.fieldElements = [];
         
         this.initializeVisualization();
-        this.createFieldElements();
-      }
-      
-      createFieldElements() {
-        // Create decorative elements representing a football field
-        const fieldWidth = this.maxRadius * 2.2;
-        const fieldHeight = this.maxRadius * 1.2;
-        
-        this.fieldElements = {
-          width: fieldWidth,
-          height: fieldHeight,
-          x: this.centerX - fieldWidth/2,
-          y: this.centerY - fieldHeight/2,
-          lines: []
-        };
-        
-        // Create yard lines
-        const numLines = 11; // 10 yard lines + 2 end zones
-        for (let i = 0; i < numLines; i++) {
-          const xPos = this.fieldElements.x + (fieldWidth * i / (numLines - 1));
-          this.fieldElements.lines.push({
-            x: xPos,
-            y1: this.fieldElements.y,
-            y2: this.fieldElements.y + fieldHeight
-          });
-        }
       }
       
       initializeVisualization() {
+        // Create a grid layout for mustangs
+        const rows = 3;
+        const cols = 5;
+        const totalMustangs = this.studentData.length;
+        
+        const gridSpacingX = windowWidth * 0.7 / (cols - 1);
+        const gridSpacingY = windowHeight * 0.6 / (rows - 1);
+        const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
+        const startY = this.centerY - (gridSpacingY * (rows - 1)) / 2;
+        
         // Create mustangs for each student group range
-        for (let i = 0; i < this.studentData.length; i++) {
-          // Position mustangs in an arc formation
-          let row, col;
-          if (i < 8) {
-            row = 0;
-            col = i;
-          } else {
-            row = 1;
-            col = i - 8;
-          }
+        for (let i = 0; i < totalMustangs; i++) {
+          // Calculate grid position
+          const row = Math.floor(i / cols);
+          const col = i % cols;
           
-          const totalCols = row === 0 ? 8 : 7;
-          const arc = PI * 0.6; // Arc angle for positioning
-          const angle = map(col, 0, totalCols - 1, -arc/2, arc/2);
-          const radius = row === 0 ? this.maxRadius * 0.55 : this.maxRadius * 0.75;
-          const x = this.centerX + cos(angle) * radius;
-          const y = this.centerY + sin(angle) * radius + (row * this.maxRadius * 0.3);
+          const x = startX + col * gridSpacingX;
+          const y = startY + row * gridSpacingY;
           
           // Determine mustang size based on total group count
           const size = map(sqrt(this.studentData[i].avgTotal), 0, sqrt(80), 40, 120);
@@ -200,24 +172,24 @@
       resize() {
         this.centerX = windowWidth / 2;
         this.centerY = windowHeight / 2;
-        this.maxRadius = min(windowWidth, windowHeight) * 0.4;
         
-        // Recreate field elements for new size
-        this.createFieldElements();
+        // Recalculate grid layout
+        const rows = 3;
+        const cols = 5;
+        
+        const gridSpacingX = windowWidth * 0.7 / (cols - 1);
+        const gridSpacingY = windowHeight * 0.6 / (rows - 1);
+        const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
+        const startY = this.centerY - (gridSpacingY * (rows - 1)) / 2;
         
         // Reposition mustangs
         for (let i = 0; i < this.mustangs.length; i++) {
           const mustang = this.mustangs[i];
           const row = mustang.row;
           const col = mustang.col;
-          const totalCols = row === 0 ? 8 : 7;
           
-          const arc = PI * 0.6;
-          const angle = map(col, 0, totalCols - 1, -arc/2, arc/2);
-          const radius = row === 0 ? this.maxRadius * 0.55 : this.maxRadius * 0.75;
-          
-          mustang.targetX = this.centerX + cos(angle) * radius;
-          mustang.targetY = this.centerY + sin(angle) * radius + (row * this.maxRadius * 0.3);
+          mustang.targetX = startX + col * gridSpacingX;
+          mustang.targetY = startY + row * gridSpacingY;
         }
       }
       
@@ -262,8 +234,8 @@
       }
       
       display() {
-        // Draw field background
-        this.drawField();
+        // Draw SMU logo in background
+        this.drawBackgroundElements();
         
         // Draw inactive groups
         for (let group of this.inactiveGroups) {
@@ -297,38 +269,40 @@
         this.drawSMULogo();
       }
       
-      drawField() {
-        // Draw football field background
+      drawBackgroundElements() {
+        // Draw a large SMU in the background
         noStroke();
-        fill(120, 70, 50); // Green field
-        rectMode(CORNER);
-        rect(this.fieldElements.x, this.fieldElements.y, this.fieldElements.width, this.fieldElements.height);
-        
-        // Draw yard lines
-        stroke(255, 0, 70, 0.5);
-        strokeWeight(2);
-        for (let line of this.fieldElements.lines) {
-          // Using the correct p5.js line function syntax
-          line(line.x, line.y1, line.x, line.y2);
-        }
-        
-        // Draw end zones
-        noStroke();
-        fill(this.smuRed[0], this.smuRed[1], this.smuRed[2], 0.3);
-        const endZoneWidth = this.fieldElements.width / 10;
-        
-        // Left end zone
-        rect(this.fieldElements.x, this.fieldElements.y, endZoneWidth, this.fieldElements.height);
-        
-        // Right end zone
-        rect(this.fieldElements.x + this.fieldElements.width - endZoneWidth, this.fieldElements.y, endZoneWidth, this.fieldElements.height);
-        
-        // Draw SMU in the center
-        fill(255, 0, 70, 0.2);
+        fill(255, 0, 70, 0.05);
         textAlign(CENTER, CENTER);
         textStyle(BOLD);
-        textSize(this.fieldElements.width * 0.15);
+        textSize(width * 0.3);
         text("SMU", this.centerX, this.centerY);
+        
+        // Draw a subtle Mustang silhouette in the background
+        fill(220, 30, 30, 0.05);
+        this.drawLargeMustangSilhouette();
+      }
+      
+      drawLargeMustangSilhouette() {
+        push();
+        translate(this.centerX, this.centerY);
+        
+        const s = min(width, height) * 0.6; // Large silhouette size
+        
+        beginShape();
+        // Simplified large mustang shape
+        vertex(-s*0.3, -s*0.2);
+        vertex(-s*0.1, -s*0.25);
+        vertex(s*0.1, -s*0.2);
+        vertex(s*0.3, -s*0.1);
+        vertex(s*0.25, s*0.1);
+        vertex(s*0.1, s*0.2);
+        vertex(-s*0.1, s*0.15);
+        vertex(-s*0.25, s*0.1);
+        vertex(-s*0.3, -s*0.2);
+        endShape(CLOSE);
+        
+        pop();
       }
       
       drawMustang(mustang) {
