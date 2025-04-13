@@ -276,21 +276,20 @@
           mustang.x = lerp(mustang.x, mustang.targetX, 0.1);
           mustang.y = lerp(mustang.y, mustang.targetY, 0.1);
           
-          // Smooth running animation instead of rocking/galloping
-          // Use a combination of vertical and rotational movement for a natural running look
-          const runCycle = this.time * mustang.gallopSpeed * 3;
-          
-          // Vertical movement component - slight up and down
-          mustang.verticalOffset = sin(runCycle) * 2.5;
-          
-          // Forward tilt component - slight forward/backward tilt
-          mustang.tiltAngle = sin(runCycle - PI/6) * 0.02; // Phase offset for more natural motion
-          
-          // If hovering, make the mustang run a bit faster but still smooth
+          // Only animate if hovering
           if (mustang.hovering) {
-            mustang.gallopSpeed = 0.07 * this.animationSpeed;
+            // More noticeable running animation
+            const runCycle = this.time * 3.5; // Faster cycle
+            
+            // Vertical movement component - more pronounced up and down
+            mustang.verticalOffset = sin(runCycle) * 5.0; // Increased amplitude
+            
+            // Forward tilt component - more noticeable forward/backward tilt
+            mustang.tiltAngle = sin(runCycle - PI/6) * 0.04; // Increased tilt
           } else {
-            mustang.gallopSpeed = random(0.04, 0.05) * this.animationSpeed;
+            // Reset animation when not hovering
+            mustang.verticalOffset = 0;
+            mustang.tiltAngle = 0;
           }
         }
         
@@ -391,7 +390,7 @@
         push();
         translate(mustang.x, mustang.y + mustang.verticalOffset); // Add vertical offset for running motion
         
-        // Apply smooth running animation with slight tilt
+        // Apply running animation tilt when hovering
         rotate(mustang.tiltAngle);
         
         // Flip horizontally if needed
@@ -400,7 +399,16 @@
         }
         
         // Apply the color tint using RGB colors
-        tint(mustang.colorRgb[0], mustang.colorRgb[1], mustang.colorRgb[2]);
+        if (mustang.hovering) {
+          // Make the mustang brighter when hovering
+          tint(
+            constrain(mustang.colorRgb[0] * 1.2, 0, 255),
+            constrain(mustang.colorRgb[1] * 1.2, 0, 255),
+            constrain(mustang.colorRgb[2] * 1.2, 0, 255)
+          );
+        } else {
+          tint(mustang.colorRgb[0], mustang.colorRgb[1], mustang.colorRgb[2]);
+        }
         
         // Calculate aspect ratio adjustment, assuming svg has width of 612
         const targetWidth = mustang.size;
@@ -515,7 +523,7 @@
         // Check if mouse is over any mustang
         for (let mustang of this.mustangs) {
           const d = dist(x, y, mustang.x, mustang.y);
-          if (d < mustang.size * 0.6) {
+          if (d < mustang.size * 0.8) { // Increased hover detection area
             hoveredMustang = mustang;
             mustang.hovering = true;
             break;
