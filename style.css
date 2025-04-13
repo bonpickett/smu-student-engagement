@@ -79,6 +79,7 @@ canvas {
   flex: 1;
   width: 100%;
   position: relative;
+  height: calc(100vh - 120px); /* Fixed height based on header size */
 }
 
 .visualization {
@@ -87,6 +88,13 @@ canvas {
   height: 100%;
   overflow: hidden;
   border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Add a consistent top padding to align visualizations */
+.visualization canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .visualization:last-child {

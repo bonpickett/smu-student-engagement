@@ -11,34 +11,20 @@ function preload() {
 
 // Setup function - called once when the sketch starts
 function setup() {
-  // We'll create two separate canvases, one for each visualization
-  setupVisualization('2025');
-  setupVisualization('2026');
+  // We'll create two separate p5 instances, one for each visualization
+  viz2025 = new p5(sketch2025, 'viz-2025');
+  viz2026 = new p5(sketch2026, 'viz-2026');
   
   // Setup view toggle buttons
   document.getElementById('view-both').addEventListener('click', () => setView('both'));
   document.getElementById('view-2025').addEventListener('click', () => setView('2025'));
   document.getElementById('view-2026').addEventListener('click', () => setView('2026'));
-}
-
-// Create a canvas and attach it to the specified container
-function setupVisualization(classYear) {
-  const container = document.getElementById(`viz-${classYear}`);
-  const canvas = createCanvas(container.offsetWidth, container.offsetHeight);
-  canvas.parent(container);
   
-  // Create the visualization for this class year
-  if (classYear === '2025') {
-    viz2025 = new p5(sketch2025, container);
-  } else {
-    viz2026 = new p5(sketch2026, container);
-  }
+  // Handle window resize
+  window.addEventListener('resize', function() {
+    resizeVisualizations();
+  });
 }
-
-// Handle window resize
-window.addEventListener('resize', function() {
-  resizeVisualizations();
-});
 
 // Resize both visualizations
 function resizeVisualizations() {
@@ -89,7 +75,8 @@ const sketch2025 = function(p) {
   p.dataArt = null;
   
   p.setup = function() {
-    p.createCanvas(p.windowWidth / 2, p.windowHeight - 120);
+    const container = document.getElementById('viz-2025');
+    p.createCanvas(container.offsetWidth, container.offsetHeight);
     p.colorMode(p.RGB);
     p.textFont('Arial');
     p.frameRate(30);
@@ -109,10 +96,11 @@ const sketch2025 = function(p) {
   };
   
   p.windowResized = function() {
+    const container = document.getElementById('viz-2025');
     if (currentView === 'both') {
-      p.resizeCanvas(p.windowWidth / 2, p.windowHeight - 120);
+      p.resizeCanvas(container.offsetWidth, container.offsetHeight);
     } else if (currentView === '2025') {
-      p.resizeCanvas(p.windowWidth, p.windowHeight - 120);
+      p.resizeCanvas(container.offsetWidth, container.offsetHeight);
     }
     if (p.dataArt) p.dataArt.resize();
   };
@@ -129,7 +117,8 @@ const sketch2026 = function(p) {
   p.dataArt = null;
   
   p.setup = function() {
-    p.createCanvas(p.windowWidth / 2, p.windowHeight - 120);
+    const container = document.getElementById('viz-2026');
+    p.createCanvas(container.offsetWidth, container.offsetHeight);
     p.colorMode(p.RGB);
     p.textFont('Arial');
     p.frameRate(30);
@@ -149,10 +138,11 @@ const sketch2026 = function(p) {
   };
   
   p.windowResized = function() {
+    const container = document.getElementById('viz-2026');
     if (currentView === 'both') {
-      p.resizeCanvas(p.windowWidth / 2, p.windowHeight - 120);
+      p.resizeCanvas(container.offsetWidth, container.offsetHeight);
     } else if (currentView === '2026') {
-      p.resizeCanvas(p.windowWidth, p.windowHeight - 120);
+      p.resizeCanvas(container.offsetWidth, container.offsetHeight);
     }
     if (p.dataArt) p.dataArt.resize();
   };
@@ -383,15 +373,13 @@ class MustangsEngagementArt {
     const rows = 3;
     const cols = 5;
     
-    // Calculate available space for visualization
+    // Use consistent values for both visualizations
     const availableHeight = p.height * 0.9;
-    
-    // Calculate grid spacing, ensuring rows are closer but still don't overlap
     const gridSpacingX = p.width * 0.75 / (cols - 1);
-    const gridSpacingY = availableHeight * 0.65 / (rows - 1);
+    const gridSpacingY = availableHeight * 0.7 / (rows - 1);
     
     const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
-    const startY = p.height * 0.15; // Start at 15% from the top
+    const startY = p.height * 0.18; // Consistent starting point
     
     // Reposition mustangs
     for (let i = 0; i < this.mustangs.length; i++) {
