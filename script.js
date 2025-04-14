@@ -1069,8 +1069,8 @@ class MustangsEngagementArt {
     
     p.pop();
     
-    // Display text information if appropriate
-    if (!this.hoverMustang || mustang === this.hoverMustang) {
+    // Only display text if not hovering (when hovering, info box shows data instead)
+    if (!mustang.hovering) {
       p.push();
       p.textAlign(p.CENTER, p.CENTER);
       p.textStyle(p.BOLD);
@@ -1113,7 +1113,7 @@ class MustangsEngagementArt {
     // Position the info panel - adjust if too close to edge
     let infoX = mustang.x + mustang.size;
     const infoY = mustang.y - mustang.size * 0.5;
-    const infoWidth = 270; // Increased from 260 for better readability
+    const infoWidth = 340; // Increased width to fit longer text
     
     // If too close to right edge, position on left side
     if (infoX + infoWidth > p.width - 20) {
@@ -1125,7 +1125,7 @@ class MustangsEngagementArt {
     p.stroke(this.smuRed[0], this.smuRed[1], this.smuRed[2]);
     p.strokeWeight(2);
     p.rectMode(p.CORNER);
-    p.rect(infoX, infoY, infoWidth, 170, 10); // Increased height to accommodate additional info
+    p.rect(infoX, infoY, infoWidth, 160, 10); // Adjusted height for content
     
     // Add community theme detail to info panel
     p.strokeWeight(1);
@@ -1143,24 +1143,28 @@ class MustangsEngagementArt {
     // Draw info text
     p.noStroke();
     p.textAlign(p.LEFT, p.TOP);
+    
+    // Group Range (White) - Title
     p.fill(255);
-    p.textSize(20); // Increased from 18 for better readability
-    p.text(`Group Range: ${data.groupRange}`, infoX + 12, infoY + 12);
+    p.textSize(20);
+    p.text(`Group Range: ${data.groupRange}`, infoX + 15, infoY + 12);
     
-    p.textSize(18); // Increased from 16 for better readability
-    p.fill(240);
-    p.text(`Total Groups: ${data.avgTotal.toFixed(1)}`, infoX + 12, infoY + 42);
-    
-    p.fill(this.smuYellow[0], this.smuYellow[1], this.smuYellow[2]);
-    p.text(`Active Groups: ${data.avgActive.toFixed(1)}`, infoX + 12, infoY + 72);
-    
+    // Total Groups (Teal) - With updated text
     p.fill(this.smuTeal[0], this.smuTeal[1], this.smuTeal[2]);
-    p.text(`Inactive Groups: ${(data.avgTotal - data.avgActive).toFixed(1)}`, infoX + 12, infoY + 102);
+    p.textSize(18);
+    p.text(`Average Total Groups/Student: ${data.avgTotal.toFixed(1)}`, infoX + 15, infoY + 45);
     
-    // Add circle size explanation with the actual value
-    p.fill(this.smuTeal[0], this.smuTeal[1], this.smuTeal[2], 220);
-    p.textSize(16);
-    p.text(`Circle Size = ${data.avgTotal.toFixed(1)} Avg. Groups per Student`, infoX + 12, infoY + 132);
+    // Active Groups - White
+    p.fill(255, 255, 255);
+    p.text(`Active Groups: ${data.avgActive.toFixed(1)}`, infoX + 15, infoY + 75);
+    
+    // Inactive Groups - White
+    p.fill(255, 255, 255);
+    p.text(`Inactive Groups: ${(data.avgTotal - data.avgActive).toFixed(1)}`, infoX + 15, infoY + 105);
+    
+    // Activity Ratio - White
+    p.fill(255, 255, 255);
+    p.text(`Activity Ratio: ${data.activeRatio.toFixed(1)}%`, infoX + 15, infoY + 135);
   }
   
   checkHover(x, y) {
