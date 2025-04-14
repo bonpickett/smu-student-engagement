@@ -76,7 +76,11 @@ const sketch2025 = function(p) {
   
   p.setup = function() {
     const container = document.getElementById('viz-2025');
-    p.createCanvas(container.offsetWidth, container.offsetHeight);
+    // Create canvas first with standard parameters
+    const canvas = p.createCanvas(container.offsetWidth, container.offsetHeight);
+    // Then set the willReadFrequently attribute directly on the canvas element
+    canvas.attribute('willReadFrequently', 'true');
+    
     p.colorMode(p.RGB);
     p.textFont('Arial');
     p.frameRate(30);
@@ -118,7 +122,11 @@ const sketch2026 = function(p) {
   
   p.setup = function() {
     const container = document.getElementById('viz-2026');
-    p.createCanvas(container.offsetWidth, container.offsetHeight);
+    // Create canvas first with standard parameters
+    const canvas = p.createCanvas(container.offsetWidth, container.offsetHeight);
+    // Then set the willReadFrequently attribute directly on the canvas element
+    canvas.attribute('willReadFrequently', 'true');
+    
     p.colorMode(p.RGB);
     p.textFont('Arial');
     p.frameRate(30);
@@ -189,7 +197,7 @@ const class2026Data = [
   { groupRange: "70+", avgTotal: 79.0, avgActive: 7.0, activeRatio: 8.4 }
 ];
 
-// Visualization class - using animated concentric rings
+// Visualization class - using SMU-themed community network representation
 class MustangsEngagementArt {
   constructor(p, studentData) {
     this.p = p; // Store the p5 instance
@@ -220,11 +228,20 @@ class MustangsEngagementArt {
     // Animation settings - smoother motion
     this.animationSpeed = 0.6;
     
-    // Add animation parameters for rings
-    this.ringAnimationSpeed = 0.005; // Controls rotation speed
+    // Add animation parameters
+    this.horseshoeRotationSpeed = 0.005; // Controls rotation speed
     this.pulseAnimationSpeed = 0.8;  // Controls pulsing speed
     this.rotationAngles = [];        // Store rotation angles for each mustang
     this.dashOffsets = [];           // Store dash pattern offsets for animation
+    
+    // Parameters for growing effect on hover - increased for more dramatic effect
+    this.growFactor = 2.0;           // How much to grow the hovered mustang (2.0 = 100% larger/double size)
+    this.growEasing = 0.08;          // Slightly slower easing for smoother growth with larger size
+    this.originalSizes = [];         // Store original sizes for reference
+    
+    // New parameters for SMU-themed visualization
+    this.miniMustangCount = []; // Store count of mini nodes for each element
+    this.miniMustangPositions = []; // Store positions of nodes
     
     this.initializeVisualization();
   }
@@ -272,6 +289,148 @@ class MustangsEngagementArt {
     ];
   }
   
+  // Create community network representation for total groups
+  createCommunityCircle(p, diameter, color) {
+    return {
+      draw: function(x, y, rotation = 0, opacity = 1) {
+        p.push();
+        p.translate(x, y);
+        p.rotate(rotation);
+        
+        // Draw main community circle
+        p.noFill();
+        p.stroke(color[0], color[1], color[2], opacity * 255);
+        p.strokeWeight(3);
+        p.ellipse(0, 0, diameter, diameter);
+        
+        // Add network lines inside the circle
+        const numLines = 8;
+        const angleStep = p.TWO_PI / numLines;
+        
+        p.strokeWeight(1.5);
+        p.stroke(color[0], color[1], color[2], opacity * 180);
+        
+        // Create a web-like pattern
+        for (let i = 0; i < numLines/2; i++) {
+          const angle1 = i * angleStep;
+          const x1 = (diameter/2) * p.cos(angle1);
+          const y1 = (diameter/2) * p.sin(angle1);
+          
+          for (let j = 0; j < numLines/2; j++) {
+            if (i !== j) {
+              const angle2 = (j + numLines/2) * angleStep;
+              const x2 = (diameter/2) * p.cos(angle2);
+              const y2 = (diameter/2) * p.sin(angle2);
+              
+              p.line(x1, y1, x2, y2);
+            }
+          }
+        }
+        
+        p.pop();
+      }
+    };
+  }
+  
+  // Create connection nodes for active groups
+  createConnectionNode(p, color) {
+    return {
+      draw: function(x, y, size, rotation = 0, opacity = 1, isActive = true) {
+        p.push();
+        p.translate(x, y);
+        p.rotate(rotation);
+        
+        // Draw connection node
+        if (isActive) {
+          // Active node
+          p.fill(color[0], color[1], color[2], opacity * 255);
+          p.noStroke();
+          p.ellipse(0, 0, size, size);
+          
+          // Add glow effect
+          p.noFill();
+          p.stroke(color[0], color[1], color[2], opacity * 120);
+          p.strokeWeight(2);
+          p.ellipse(0, 0, size * 1.3, size * 1.3);
+        } else {
+          // Inactive node - more subtle
+          p.noFill();
+          p.stroke(color[0], color[1], color[2], opacity * 150);
+          p.strokeWeight(1);
+          p.ellipse(0, 0, size, size);
+          
+          // Add X mark for inactive
+          p.stroke(color[0], color[1], color[2], opacity * 100);
+          p.line(-size/4, -size/4, size/4, size/4);
+          p.line(-size/4, size/4, size/4, -size/4);
+        }
+        
+        p.pop();
+      }
+    };
+  }
+  
+  // Create connection lines between nodes
+  createConnectionLines(p, color) {
+    return {
+      draw: function(x, y, radius, numConnections, rotation = 0, opacity = 1) {
+        p.push();
+        p.translate(x, y);
+        p.rotate(rotation);
+        
+        p.noFill();
+        p.stroke(color[0], color[1], color[2], opacity * 200);
+        p.strokeWeight(1.5);
+        
+        // Draw radial connection lines
+        const angleStep = p.TWO_PI / numConnections;
+        
+        for (let i = 0; i < numConnections; i++) {
+          const angle = i * angleStep;
+          const x2 = radius * p.cos(angle);
+          const y2 = radius * p.sin(angle);
+          
+          // Draw dashed line
+          p.drawingContext.setLineDash([5, 5]);
+          p.line(0, 0, x2, y2);
+        }
+        
+        // Reset line dash
+        p.drawingContext.setLineDash([]);
+        
+        p.pop();
+      }
+    };
+  }
+  
+  // Create person icon for the nodes
+  createPersonIcon(p, color) {
+    return {
+      draw: function(x, y, size, rotation = 0, opacity = 1) {
+        p.push();
+        p.translate(x, y);
+        p.rotate(rotation);
+        
+        // Draw person icon
+        p.noStroke();
+        p.fill(color[0], color[1], color[2], opacity * 255);
+        
+        // Head
+        p.ellipse(0, -size/3, size/2.5, size/2.5);
+        
+        // Body
+        p.ellipse(0, size/6, size/2, size/1.8);
+        
+        // Add simple details to make it more human-like
+        p.fill(255, 255, 255, opacity * 200);
+        p.ellipse(-size/10, -size/3, size/12, size/8); // Left eye
+        p.ellipse(size/10, -size/3, size/12, size/8);  // Right eye
+        
+        p.pop();
+      }
+    };
+  }
+  
   initializeVisualization() {
     const p = this.p;
     
@@ -294,9 +453,9 @@ class MustangsEngagementArt {
     
     const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
     
-    // Calculate the maximum mustang size and ring sizes - increased by 25%
-    const maxMustangSize = Math.min(gridSpacingX * 0.4, gridSpacingY * 0.4); // Increased from 0.3
-    const maxRingSize = Math.min(gridSpacingX, gridSpacingY) * 0.5; // Increased from 0.4
+    // Calculate the maximum mustang size and community circle sizes
+    const maxMustangSize = Math.min(gridSpacingX * 0.4, gridSpacingY * 0.4);
+    const maxCircleSize = Math.min(gridSpacingX, gridSpacingY) * 0.8; // Larger for better visibility
     
     // Create mustangs for each student group range
     for (let i = 0; i < totalMustangs; i++) {
@@ -314,14 +473,53 @@ class MustangsEngagementArt {
       // Determine mustang size based on total group count - larger base size
       const maxGroupCount = this.studentData === class2026Data ? 80 : 50;
       // Calculate base size from data but cap it to prevent overlap
-      const baseSize = p.map(p.sqrt(this.studentData[i].avgTotal), 0, p.sqrt(maxGroupCount), 40, 110); // Increased from 30-90
+      const baseSize = p.map(p.sqrt(this.studentData[i].avgTotal), 0, p.sqrt(maxGroupCount), 40, 110);
       const size = Math.min(baseSize, maxMustangSize);
       
-      // Calculate ring sizes based on data
-      // Outer ring size based on total groups
-      const outerRingSize = p.map(this.studentData[i].avgTotal, 0, maxGroupCount, size * 1.3, maxRingSize);
-      // Inner ring size based on active groups and maintaining the ratio
-      const innerRingSize = (this.studentData[i].avgActive / this.studentData[i].avgTotal) * outerRingSize;
+      // Store the original size for the growing effect
+      this.originalSizes[i] = size;
+      
+      // Calculate community network sizes based on data
+      // Community circle diameter (outer representation - total groups)
+      const circleDiameter = p.map(this.studentData[i].avgTotal, 0, maxGroupCount, size * 2.0, maxCircleSize);
+      
+      // Connection radius (for active nodes)
+      const connectionRadius = circleDiameter * 0.4;
+      
+      // Calculate number of nodes to show based on total groups
+      // We'll split them between active and inactive
+      const totalNodes = Math.min(12, Math.ceil(this.studentData[i].avgTotal / 3));
+      const activeNodes = Math.ceil((this.studentData[i].avgActive / this.studentData[i].avgTotal) * totalNodes);
+      const inactiveNodes = totalNodes - activeNodes;
+      
+      // Store node counts
+      this.miniMustangCount[i] = { active: activeNodes, inactive: inactiveNodes, total: totalNodes };
+      this.miniMustangPositions[i] = [];
+      
+      // Calculate positions for nodes around the mustang
+      for (let j = 0; j < totalNodes; j++) {
+        // Distribute nodes evenly in a circle
+        const angle = j * (p.TWO_PI / totalNodes);
+        const distance = connectionRadius;
+        const nodeX = distance * p.cos(angle);
+        const nodeY = distance * p.sin(angle);
+        
+        // Add some randomness to size and rotation
+        const rotation = p.random(-p.PI/8, p.PI/8);
+        const isActive = j < activeNodes; // First nodes will be active
+        
+        this.miniMustangPositions[i].push({
+          x: nodeX,
+          y: nodeY,
+          angle: angle,
+          rotation: rotation,
+          originalX: nodeX,
+          originalY: nodeY,
+          size: size * 0.25, // Size relative to main mustang
+          speed: p.random(0.02, 0.05),
+          isActive: isActive
+        });
+      }
       
       // Get color based on activation ratio
       const colorRgb = this.getColorFromPalette(this.studentData[i].activeRatio);
@@ -332,23 +530,27 @@ class MustangsEngagementArt {
         targetX: x,
         targetY: y,
         size: size,
+        displaySize: size, // New property for animated size
+        originalSize: size, // Keep track of the original size
         data: this.studentData[i],
         colorRgb: colorRgb,
         angle: 0,
-        verticalOffset: 0, // For running animation - vertical component
-        tiltAngle: 0,      // For running animation - rotational component
+        verticalOffset: 0, // For animation - vertical component
+        tiltAngle: 0,      // For animation - rotational component
         gallopSpeed: p.random(0.04, 0.05) * this.animationSpeed, // Smoother animation
         hovering: false,
         row: row,
         col: col,
-        // New properties for concentric rings
-        outerRingSize: outerRingSize,
-        innerRingSize: innerRingSize,
-        // Animation properties for rings
-        outerRingPulse: 0,
-        innerRingPulse: 0,
-        ringOpacity: 0.7,
-        // Add animation properties
+        // New properties for community-themed representation
+        circleDiameter: circleDiameter,
+        originalCircleDiameter: circleDiameter,
+        connectionRadius: connectionRadius,
+        originalConnectionRadius: connectionRadius,
+        // Animation properties
+        circlePulse: 0,
+        nodePulse: 0,
+        elementOpacity: 0.85,
+        // Animation timing
         rotationSpeed: p.random(0.001, 0.003) * (i % 2 === 0 ? 1 : -1), // Alternate directions
         pulsePhase: p.random(0, p.TWO_PI),                              // Random phase for pulse
         dashOffset: this.dashOffsets[i],
@@ -358,6 +560,12 @@ class MustangsEngagementArt {
       
       this.mustangs.push(mustang);
     }
+    
+    // Create the reusable community visualization objects
+    this.communityCircle = this.createCommunityCircle(p, 100, this.smuTeal);
+    this.connectionNode = this.createConnectionNode(p, this.smuRed);
+    this.connectionLines = this.createConnectionLines(p, this.smuYellow);
+    this.personIcon = this.createPersonIcon(p, this.smuYellow);
   }
   
   resize() {
@@ -377,9 +585,9 @@ class MustangsEngagementArt {
     const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
     const startY = p.height * 0.15; // Adjusted starting point
     
-    // Calculate the maximum mustang size and ring sizes - increased by 25%
-    const maxMustangSize = Math.min(gridSpacingX * 0.4, gridSpacingY * 0.4); // Increased from 0.3
-    const maxRingSize = Math.min(gridSpacingX, gridSpacingY) * 0.5; // Increased from 0.4
+    // Calculate the maximum mustang size and circle sizes
+    const maxMustangSize = Math.min(gridSpacingX * 0.4, gridSpacingY * 0.4);
+    const maxCircleSize = Math.min(gridSpacingX, gridSpacingY) * 0.8;
     
     // Reposition mustangs
     for (let i = 0; i < this.mustangs.length; i++) {
@@ -395,12 +603,52 @@ class MustangsEngagementArt {
       
       // Recalculate size to prevent overlap
       const maxGroupCount = this.studentData === class2026Data ? 80 : 50;
-      const baseSize = p.map(p.sqrt(mustang.data.avgTotal), 0, p.sqrt(maxGroupCount), 40, 110); // Increased
-      mustang.size = Math.min(baseSize, maxMustangSize);
+      const baseSize = p.map(p.sqrt(mustang.data.avgTotal), 0, p.sqrt(maxGroupCount), 40, 110);
+      mustang.originalSize = Math.min(baseSize, maxMustangSize);
       
-      // Recalculate ring sizes
-      mustang.outerRingSize = p.map(mustang.data.avgTotal, 0, maxGroupCount, mustang.size * 1.3, maxRingSize);
-      mustang.innerRingSize = (mustang.data.avgActive / mustang.data.avgTotal) * mustang.outerRingSize;
+      // Update current size based on hover state
+      if (mustang.hovering) {
+        mustang.size = mustang.originalSize * this.growFactor;
+      } else {
+        mustang.size = mustang.originalSize;
+      }
+      
+      // Store the new original size
+      this.originalSizes[i] = mustang.originalSize;
+      
+      // Recalculate community network sizes
+      mustang.originalCircleDiameter = p.map(mustang.data.avgTotal, 0, maxGroupCount, mustang.originalSize * 2.0, maxCircleSize);
+      mustang.originalConnectionRadius = mustang.originalCircleDiameter * 0.4;
+      
+      // Update current circle sizes based on hover state
+      if (mustang.hovering) {
+        mustang.circleDiameter = mustang.originalCircleDiameter * this.growFactor;
+        mustang.connectionRadius = mustang.originalConnectionRadius * this.growFactor;
+      } else {
+        mustang.circleDiameter = mustang.originalCircleDiameter;
+        mustang.connectionRadius = mustang.originalConnectionRadius;
+      }
+      
+      // Also update node positions if needed
+      if (this.miniMustangCount[i] && this.miniMustangCount[i].total) {
+        const totalNodes = this.miniMustangCount[i].total;
+        
+        // Recalculate node positions around the circle
+        for (let j = 0; j < totalNodes; j++) {
+          if (this.miniMustangPositions[i] && this.miniMustangPositions[i][j]) {
+            const angle = j * (p.TWO_PI / totalNodes);
+            const distance = mustang.originalConnectionRadius;
+            const nodeX = distance * p.cos(angle);
+            const nodeY = distance * p.sin(angle);
+            
+            const node = this.miniMustangPositions[i][j];
+            node.originalX = nodeX;
+            node.originalY = nodeY;
+            node.angle = angle;
+            node.size = mustang.originalSize * 0.25;
+          }
+        }
+      }
     }
   }
   
@@ -417,7 +665,7 @@ class MustangsEngagementArt {
       mustang.x = p.lerp(mustang.x, mustang.targetX, 0.1);
       mustang.y = p.lerp(mustang.y, mustang.targetY, 0.1);
       
-      // Continuously animate rings (slower when not hovering)
+      // Continuously animate elements (slower when not hovering)
       const animationSpeedFactor = mustang.hovering ? 1.0 : 0.3;
       
       // Update rotation angle based on rotation speed
@@ -427,24 +675,86 @@ class MustangsEngagementArt {
       mustang.dashOffset -= 0.2 * animationSpeedFactor;
       if (mustang.dashOffset < 0) mustang.dashOffset += 100;
       
-      // Only animate mustang if hovering
+      // Handle size growth on hover
       if (mustang.hovering) {
-        const runCycle = this.time * 3.5;
-        mustang.verticalOffset = p.sin(runCycle) * 5.0;
-        mustang.tiltAngle = p.sin(runCycle - p.PI/6) * 0.04;
+        // Grow the mustang when hovering
+        const targetSize = this.originalSizes[i] * this.growFactor;
+        mustang.size = p.lerp(mustang.size, targetSize, this.growEasing);
         
-        // Enhanced animation for rings when hovering
-        mustang.outerRingPulse = p.sin(this.time * this.pulseAnimationSpeed * 2 + mustang.pulsePhase) * 4;
-        mustang.innerRingPulse = p.sin(this.time * this.pulseAnimationSpeed * 2 + mustang.pulsePhase + p.PI/4) * 3;
-        mustang.ringOpacity = 0.9; // Increased opacity when hovering
+        // Also grow the community elements proportionally
+        mustang.circleDiameter = p.lerp(mustang.circleDiameter, mustang.originalCircleDiameter * this.growFactor, this.growEasing);
+        mustang.connectionRadius = p.lerp(mustang.connectionRadius, mustang.originalConnectionRadius * this.growFactor, this.growEasing);
+        
+        // Additional animation when hovering
+        const floatCycle = this.time * 2.5;
+        mustang.verticalOffset = p.sin(floatCycle) * 2.0;
+        mustang.tiltAngle = p.sin(floatCycle - p.PI/6) * 0.02;
+        
+        // Enhanced animation for elements when hovering
+        mustang.circlePulse = p.sin(this.time * this.pulseAnimationSpeed * 2 + mustang.pulsePhase) * 4;
+        mustang.nodePulse = p.sin(this.time * this.pulseAnimationSpeed * 3 + mustang.pulsePhase + p.PI/4) * 3;
+        mustang.elementOpacity = 0.95; // Increased opacity when hovering
+        
+        // Update node animations - make them more active when hovering
+        if (this.miniMustangCount[i] && this.miniMustangCount[i].total) {
+          const totalNodes = this.miniMustangCount[i].total;
+          for (let j = 0; j < totalNodes; j++) {
+            if (this.miniMustangPositions[i] && this.miniMustangPositions[i][j]) {
+              const node = this.miniMustangPositions[i][j];
+              
+              // Create more dynamic movement for nodes when hovering
+              // Nodes move closer/further from center to show activity
+              const time = this.time * node.speed * 2;
+              const originalRadius = mustang.connectionRadius;
+              const pulseRadius = 0.2 * originalRadius * (node.isActive ? 0.7 : 0.3);
+              const radiusOffset = p.sin(time + j * 0.7) * pulseRadius;
+              
+              // Calculate position with pulsing radius
+              const currentRadius = originalRadius + radiusOffset;
+              node.x = currentRadius * p.cos(node.angle + p.sin(time * 0.2) * 0.05);
+              node.y = currentRadius * p.sin(node.angle + p.sin(time * 0.2) * 0.05);
+              
+              // Add slight rotation to the node itself
+              node.rotation = p.sin(time * 0.5) * 0.1;
+            }
+          }
+        }
       } else {
+        // Shrink back to normal size when not hovering
+        mustang.size = p.lerp(mustang.size, this.originalSizes[i], this.growEasing);
+        
+        // Also shrink the community elements back to normal
+        mustang.circleDiameter = p.lerp(mustang.circleDiameter, mustang.originalCircleDiameter, this.growEasing);
+        mustang.connectionRadius = p.lerp(mustang.connectionRadius, mustang.originalConnectionRadius, this.growEasing);
+        
+        // Reset animation when not hovering
         mustang.verticalOffset = 0;
         mustang.tiltAngle = 0;
         
-        // Subtle animation for rings when not hovering
-        mustang.outerRingPulse = p.sin(this.time * this.pulseAnimationSpeed + mustang.pulsePhase) * 1.5;
-        mustang.innerRingPulse = p.sin(this.time * this.pulseAnimationSpeed + mustang.pulsePhase + p.PI/3) * 1;
-        mustang.ringOpacity = isDimming && mustang !== this.hoverMustang ? 0.3 : 0.7;
+        // Subtle animation for elements when not hovering
+        mustang.circlePulse = p.sin(this.time * this.pulseAnimationSpeed + mustang.pulsePhase) * 1.5;
+        mustang.nodePulse = p.sin(this.time * this.pulseAnimationSpeed + mustang.pulsePhase + p.PI/3) * 1;
+        mustang.elementOpacity = isDimming && mustang !== this.hoverMustang ? 0.4 : 0.85;
+        
+        // Update node animations - more subtle when not hovering
+        if (this.miniMustangCount[i] && this.miniMustangCount[i].total) {
+          const totalNodes = this.miniMustangCount[i].total;
+          for (let j = 0; j < totalNodes; j++) {
+            if (this.miniMustangPositions[i] && this.miniMustangPositions[i][j]) {
+              const node = this.miniMustangPositions[i][j];
+              
+              // More subtle movement when not hovering
+              const time = this.time * node.speed * 0.5;
+              
+              // Slight movement around original position
+              // Active nodes move more than inactive ones
+              const moveAmt = node.isActive ? 2 : 1;
+              node.x = node.originalX + p.sin(time + j * 1.2) * moveAmt;
+              node.y = node.originalY + p.cos(time * 0.8 + j) * moveAmt;
+              node.rotation = p.sin(time * 0.3) * 0.05;
+            }
+          }
+        }
       }
     }
   }
@@ -458,18 +768,40 @@ class MustangsEngagementArt {
     // Check if we need to apply dimming effect
     const isDimming = this.hoverMustang !== null;
     
-    // First, draw all the rings (they should be behind the mustangs)
+    // First, draw the community circles (total groups representation)
     for (let i = 0; i < this.mustangs.length; i++) {
       const mustang = this.mustangs[i];
-      // Draw the rings with appropriate dimming
+      // Draw the community circles with appropriate dimming
       if (!isDimming || mustang === this.hoverMustang) {
-        this.drawConcentricRings(mustang, false, i);
+        this.drawCommunityCircle(mustang, false, i);
       } else {
-        this.drawConcentricRings(mustang, true, i);
+        this.drawCommunityCircle(mustang, true, i);
       }
     }
     
-    // Then draw the mustangs on top of the rings
+    // Draw the connection lines from mustang to nodes
+    for (let i = 0; i < this.mustangs.length; i++) {
+      const mustang = this.mustangs[i];
+      // Draw the connection lines with appropriate dimming
+      if (!isDimming || mustang === this.hoverMustang) {
+        this.drawConnectionLines(mustang, false, i);
+      } else {
+        this.drawConnectionLines(mustang, true, i);
+      }
+    }
+    
+    // Next, draw the connection nodes (both active and inactive)
+    for (let i = 0; i < this.mustangs.length; i++) {
+      const mustang = this.mustangs[i];
+      // Draw the nodes with appropriate dimming
+      if (!isDimming || mustang === this.hoverMustang) {
+        this.drawConnectionNodes(mustang, false, i);
+      } else {
+        this.drawConnectionNodes(mustang, true, i);
+      }
+    }
+    
+    // Then draw the main mustangs on top
     for (let mustang of this.mustangs) {
       // Draw dimmed mustangs first (if any hovered)
       if (isDimming && mustang !== this.hoverMustang) {
@@ -477,7 +809,7 @@ class MustangsEngagementArt {
       }
     }
     
-    // Draw the hovered mustang last (on top)
+    // Draw the hovered mustang
     if (this.hoverMustang) {
       this.drawMustangSvg(this.hoverMustang, false); // false = not dimmed
     }
@@ -495,98 +827,89 @@ class MustangsEngagementArt {
     }
   }
   
-  // New method to draw animated concentric rings
-  drawConcentricRings(mustang, dimmed = false, index) {
+  // Method to draw the community circle representation
+  drawCommunityCircle(mustang, dimmed = false, index) {
     const p = this.p;
     
-    // Optional subtle background for the rings
-    p.noStroke();
-    p.fill(0, 0, 0, 10);
-    p.ellipse(mustang.x, mustang.y, mustang.outerRingSize * 1.1);
+    // Determine opacity based on hover/dimmed state
+    const opacity = dimmed ? 0.3 : mustang.elementOpacity;
     
-    // Draw outer ring (total groups)
-    p.noFill();
-    p.strokeWeight(5);
+    // Calculate diameter with pulse effect
+    const diameter = mustang.circleDiameter + (mustang.circlePulse || 0);
+    
+    // Draw the community circle
+    this.communityCircle.draw(
+      mustang.x, 
+      mustang.y,
+      this.rotationAngles[index] * 0.1, // Slight rotation
+      opacity
+    );
+  }
+  
+  // Method to draw the connection lines
+  drawConnectionLines(mustang, dimmed = false, index) {
+    const p = this.p;
     
     // Determine opacity based on hover/dimmed state
-    const ringOpacity = dimmed ? 0.3 : mustang.ringOpacity;
+    const opacity = dimmed ? 0.3 : mustang.elementOpacity;
     
-    // Rotation angle for this mustang
-    const rotationAngle = this.rotationAngles[index];
-    
-    // Draw outer ring (total groups) - Teal color with rotation and dash pattern
-    p.push();
-    p.translate(mustang.x, mustang.y);
-    p.rotate(rotationAngle);
-    
-    // Set dash pattern based on hovering state
-    if (mustang.hovering) {
-      p.drawingContext.setLineDash([2, 4]); // Shorter dashes when hovering
-    } else {
-      p.drawingContext.setLineDash([4, 8]); // Longer dashes when not hovering
-    }
-    
-    // Animate the dash pattern
-    p.drawingContext.lineDashOffset = mustang.dashOffset;
-    
-    p.stroke(
-      this.smuTeal[0],
-      this.smuTeal[1],
-      this.smuTeal[2],
-      255 * ringOpacity
-    );
-    
-    // Draw the outer ring with pulse
-    p.ellipse(
-      0, 0,
-      mustang.outerRingSize + mustang.outerRingPulse
-    );
-    
-    // Draw inner ring (active groups) - Red color with counter-rotation
-    p.rotate(-rotationAngle * 2); // Counter-rotate
-    
-    // Set different dash pattern for inner ring
-    if (mustang.hovering) {
-      p.drawingContext.setLineDash([3, 2]); // Different pattern when hovering
-    } else {
-      p.drawingContext.setLineDash([6, 4]); // Different pattern when not hovering
-    }
-    
-    // Animate the dash pattern in the opposite direction
-    p.drawingContext.lineDashOffset = -mustang.dashOffset * 1.5;
-    
-    p.strokeWeight(6);
-    p.stroke(
-      this.smuRed[0],
-      this.smuRed[1],
-      this.smuRed[2],
-      255 * ringOpacity
-    );
-    
-    // Draw the inner ring with pulse
-    p.ellipse(
-      0, 0,
-      mustang.innerRingSize + mustang.innerRingPulse
-    );
-    
-    // Reset the dash pattern
-    p.drawingContext.setLineDash([]);
-    p.pop();
-    
-    // Optional subtle measurement tick marks when hovering
-    if (mustang.hovering) {
-      p.stroke(255, 255, 255, 30);
-      p.strokeWeight(1);
+    // Draw the connection lines
+    if (this.miniMustangCount[index] && this.miniMustangCount[index].total) {
+      const totalNodes = this.miniMustangCount[index].total;
       
-      // Draw subtle measurement guides
-      p.line(
-        mustang.x - mustang.outerRingSize/2, mustang.y,
-        mustang.x + mustang.outerRingSize/2, mustang.y
+      this.connectionLines.draw(
+        mustang.x,
+        mustang.y,
+        mustang.connectionRadius, // Radius for connections
+        totalNodes, // Number of connections
+        this.rotationAngles[index] * -0.05, // Slight counter-rotation
+        opacity
       );
-      p.line(
-        mustang.x, mustang.y - mustang.outerRingSize/2,
-        mustang.x, mustang.y + mustang.outerRingSize/2
-      );
+    }
+  }
+  
+  // Method to draw the connection nodes
+  drawConnectionNodes(mustang, dimmed = false, index) {
+    const p = this.p;
+    
+    // Determine opacity based on hover/dimmed state
+    const opacity = dimmed ? 0.3 : mustang.elementOpacity;
+    
+    // Get the node information for this element
+    if (this.miniMustangCount[index] && this.miniMustangCount[index].total) {
+      const totalNodes = this.miniMustangCount[index].total;
+      
+      // Draw each node
+      for (let j = 0; j < totalNodes; j++) {
+        if (this.miniMustangPositions[index] && this.miniMustangPositions[index][j]) {
+          const node = this.miniMustangPositions[index][j];
+          
+          // Adjust position based on the main mustang position
+          const x = mustang.x + node.x;
+          const y = mustang.y + node.y;
+          
+          // First draw the connection node
+          this.connectionNode.draw(
+            x,
+            y,
+            node.size * (mustang.hovering ? this.growFactor : 1), // Scale when hovering
+            node.rotation,
+            opacity,
+            node.isActive // Pass whether node is active or not
+          );
+          
+          // Then draw a person icon for active nodes only
+          if (node.isActive) {
+            this.personIcon.draw(
+              x,
+              y,
+              node.size * 0.9 * (mustang.hovering ? this.growFactor : 1), // Slightly smaller than the node
+              node.rotation,
+              opacity
+            );
+          }
+        }
+      }
     }
   }
   
@@ -598,8 +921,6 @@ class MustangsEngagementArt {
     
     // Use a semi-transparent background to blend with the page background
     p.background(0, 0, 0, 20);
-    
-    // Background circles have been removed
   }
   
   drawMustangSvg(mustang, dimmed = false) {
@@ -631,13 +952,21 @@ class MustangsEngagementArt {
       p.tint(mustang.colorRgb[0], mustang.colorRgb[1], mustang.colorRgb[2]);
     }
     
-    // Calculate aspect ratio adjustment
-    const targetWidth = mustang.size;
-    const targetHeight = targetWidth * (mustangSvg.height / mustangSvg.width);
-    
-    // Draw the SVG image
-    p.imageMode(p.CENTER);
-    p.image(mustangSvg, 0, 0, targetWidth, targetHeight);
+    // Check if mustangSvg is defined before using it
+    if (mustangSvg) {
+      // Calculate aspect ratio adjustment using the current (possibly grown) size
+      const targetWidth = mustang.size;
+      const targetHeight = targetWidth * (mustangSvg.height / mustangSvg.width);
+      
+      // Draw the SVG image
+      p.imageMode(p.CENTER);
+      p.image(mustangSvg, 0, 0, targetWidth, targetHeight);
+    } else {
+      // Fallback if SVG is not loaded - draw a simple shape
+      p.noStroke();
+      p.fill(mustang.colorRgb[0], mustang.colorRgb[1], mustang.colorRgb[2]);
+      p.ellipse(0, 0, mustang.size, mustang.size * 0.75);
+    }
     
     // Remove tint
     p.noTint();
@@ -677,19 +1006,32 @@ class MustangsEngagementArt {
     // Position the info panel - adjust if too close to edge
     let infoX = mustang.x + mustang.size;
     const infoY = mustang.y - mustang.size * 0.5;
-    const infoWidth = 260; // Increased from 240 for better readability
+    const infoWidth = 270; // Increased from 260 for better readability
     
     // If too close to right edge, position on left side
     if (infoX + infoWidth > p.width - 20) {
       infoX = mustang.x - mustang.size - infoWidth;
     }
     
-    // Draw info panel background
-    p.fill(33, 46, 121, 245);
-    p.stroke(204, 0, 53);
+    // Draw info panel background with SMU blue
+    p.fill(this.smuBlue[0], this.smuBlue[1], this.smuBlue[2], 245);
+    p.stroke(this.smuRed[0], this.smuRed[1], this.smuRed[2]);
     p.strokeWeight(2);
     p.rectMode(p.CORNER);
     p.rect(infoX, infoY, infoWidth, 140, 10);
+    
+    // Add community theme detail to info panel
+    p.strokeWeight(1);
+    p.stroke(this.smuYellow[0], this.smuYellow[1], this.smuYellow[2], 100);
+    p.drawingContext.setLineDash([5, 5]);
+    p.line(infoX + 10, infoY + 35, infoX + infoWidth - 10, infoY + 35);
+    p.drawingContext.setLineDash([]);
+    
+    // Draw small nodes at either end of the line
+    p.fill(this.smuYellow[0], this.smuYellow[1], this.smuYellow[2], 180);
+    p.noStroke();
+    p.ellipse(infoX + 10, infoY + 35, 6, 6);
+    p.ellipse(infoX + infoWidth - 10, infoY + 35, 6, 6);
     
     // Draw info text
     p.noStroke();
@@ -702,10 +1044,10 @@ class MustangsEngagementArt {
     p.fill(240);
     p.text(`Total Groups: ${data.avgTotal.toFixed(1)}`, infoX + 12, infoY + 42);
     
-    p.fill(249, 220, 92);
+    p.fill(this.smuYellow[0], this.smuYellow[1], this.smuYellow[2]);
     p.text(`Active Groups: ${data.avgActive.toFixed(1)}`, infoX + 12, infoY + 72);
     
-    p.fill(89, 195, 195);
+    p.fill(this.smuTeal[0], this.smuTeal[1], this.smuTeal[2]);
     p.text(`Inactive Groups: ${(data.avgTotal - data.avgActive).toFixed(1)}`, infoX + 12, infoY + 102);
   }
   
