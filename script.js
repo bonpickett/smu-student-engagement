@@ -183,10 +183,10 @@ const class2025Data = [
     { groupRange: "34-37", avgTotal: 37.0, avgActive: 31.0, activeRatio: 83.8 },
     { groupRange: "38-41", avgTotal: 39.2, avgActive: 35.2, activeRatio: 89.7 },
     { groupRange: "42-45", avgTotal: 43.0, avgActive: 39.0, activeRatio: 90.6 },
-    { groupRange: "46-49", avgTotal: 45.0, avgActive: 40.5, activeRatio: 90.0 }, // Added missing range
+    { groupRange: "46-49", avgTotal: 45.0, avgActive: 40.5, activeRatio: 90.0 }, 
     { groupRange: "50-59", avgTotal: 50.0, avgActive: 45.0, activeRatio: 90.0 },
-    { groupRange: "60-69", avgTotal: 65.0, avgActive: 58.5, activeRatio: 90.0 }, // Added missing range
-    { groupRange: "70+", avgTotal: 75.0, avgActive: 67.5, activeRatio: 90.0 }    // Added missing range
+    { groupRange: "60-69", avgTotal: 65.0, avgActive: 58.5, activeRatio: 90.0 }, 
+    { groupRange: "70+", avgTotal: 75.0, avgActive: 67.5, activeRatio: 90.0 }    
   ];
   
   // Data for Class of 2026
@@ -253,6 +253,11 @@ class MustangsEngagementArt {
     // New parameters for SMU-themed visualization
     this.miniMustangCount = []; // Store count of mini nodes for each element
     this.miniMustangPositions = []; // Store positions of nodes
+    
+    // New parameters for centering hover effect
+    this.centeringEasing = 0.06;     // Easing factor for centering animation (reduced for smoother movement)
+    this.centeringEnabled = true;    // Flag to enable/disable centering feature
+    this.originalPositions = [];     // Store original grid positions
     
     this.initializeVisualization();
   }
@@ -477,6 +482,9 @@ class MustangsEngagementArt {
       const x = startX + col * gridSpacingX;
       const y = startY + row * gridSpacingY;
       
+      // Store original position for later reference
+      this.originalPositions[i] = { x: x, y: y };
+      
       // Initialize animation values for this mustang
       this.rotationAngles[i] = 0;
       this.dashOffsets[i] = p.random(0, 100); // Random starting offset
@@ -540,6 +548,8 @@ class MustangsEngagementArt {
         y: y,
         targetX: x,
         targetY: y,
+        originalX: x, // Store original X position for returning after hover
+        originalY: y, // Store original Y position for returning after hover
         size: size,
         displaySize: size, // New property for animated size
         originalSize: size, // Keep track of the original size
@@ -566,7 +576,9 @@ class MustangsEngagementArt {
         pulsePhase: p.random(0, p.TWO_PI),                              // Random phase for pulse
         dashOffset: this.dashOffsets[i],
         // All mustangs facing same direction
-        flipX: false
+        flipX: false,
+        // Edge detection flag - for centering on hover
+        isNearEdge: false
       };
       
       this.mustangs.push(mustang);
@@ -609,8 +621,24 @@ class MustangsEngagementArt {
       mustang.row = row; // Update the row property
       mustang.col = col; // Update the col property
       
-      mustang.targetX = startX + col * gridSpacingX;
-      mustang.targetY = startY + row * gridSpacingY;
+      // Calculate new grid position
+      const newX = startX + col * gridSpacingX;
+      const newY = startY + row * gridSpacingY;
+      
+      // Update original position
+      mustang.originalX = newX;
+      mustang.originalY = newY;
+      this.originalPositions[i] = { x: newX, y: newY };
+      
+      // If not hovering, update target position too
+      if (!mustang.hovering) {
+        mustang.targetX = newX;
+        mustang.targetY = newY;
+      } else if (this.centeringEnabled) {
+        // If hovering and centering is enabled, keep target as center
+        mustang.targetX = this.centerX;
+        mustang.targetY = this.centerY;
+      }
       
       // Recalculate size to prevent overlap
       const maxGroupCount = this.studentData === class2026Data ? 80 : 50;
@@ -663,6 +691,20 @@ class MustangsEngagementArt {
     }
   }
   
+  // Check if a mustang is close to the screen edge
+  checkIfNearEdge(mustang) {
+    const p = this.p;
+    const buffer = mustang.size * 1.2; // Buffer distance from the edge
+    
+    // Check if mustang is close to any edge of the screen
+    const isCloseToLeftEdge = mustang.x < buffer;
+    const isCloseToRightEdge = mustang.x > p.width - buffer;
+    const isCloseToTopEdge = mustang.y < buffer;
+    const isCloseToBottomEdge = mustang.y > p.height - buffer;
+    
+    return isCloseToLeftEdge || isCloseToRightEdge || isCloseToTopEdge || isCloseToBottomEdge;
+  }
+  
   update() {
     const p = this.p;
     this.time += 0.01;
@@ -673,8 +715,37 @@ class MustangsEngagementArt {
     for (let i = 0; i < this.mustangs.length; i++) {
       const mustang = this.mustangs[i];
       
-      mustang.x = p.lerp(mustang.x, mustang.targetX, 0.1);
-      mustang.y = p.lerp(mustang.y, mustang.targetY, 0.1);
+      // Update target position based on hover state
+      if (this.centeringEnabled) {
+        if (mustang.hovering) {
+          // If hovering, move towards center of screen
+          mustang.targetX = this.centerX;
+          mustang.targetY = this.centerY;
+        } else {
+          // If not hovering, move back to original position
+          mustang.targetX = mustang.originalX;
+          mustang.targetY = mustang.originalY;
+        }
+      }
+      
+      // Apply easing to movement - using different easing based on hover state
+      // More sophisticated easing for smoother movement
+      // Calculate distance to target
+      const distToTarget = p.dist(mustang.x, mustang.y, mustang.targetX, mustang.targetY);
+      
+      // Dynamic easing - start fast, slow down as it approaches target
+      let positionEasing;
+      if (mustang.hovering) {
+        // Smoother, more deliberate movement to center when hovered
+        positionEasing = p.map(distToTarget, 0, 300, this.centeringEasing * 0.5, this.centeringEasing * 1.2);
+      } else {
+        // Gentle return to original position
+        positionEasing = this.centeringEasing * 0.8;
+      }
+      
+      // Apply the calculated easing
+      mustang.x = p.lerp(mustang.x, mustang.targetX, positionEasing);
+      mustang.y = p.lerp(mustang.y, mustang.targetY, positionEasing);
       
       // Continuously animate elements (slower when not hovering)
       const animationSpeedFactor = mustang.hovering ? 1.0 : 0.3;
@@ -767,6 +838,9 @@ class MustangsEngagementArt {
           }
         }
       }
+      
+      // Update edge detection flag
+      mustang.isNearEdge = this.checkIfNearEdge(mustang);
     }
   }
   
@@ -1087,10 +1161,19 @@ class MustangsEngagementArt {
       if (d < mustang.size * 0.8) {
         hoveredMustang = mustang;
         mustang.hovering = true;
+        
+        // Check if the mustang is near the edge of the screen
+        mustang.isNearEdge = this.checkIfNearEdge(mustang);
         break;
       }
     }
     
     this.hoverMustang = hoveredMustang;
+    
+    // If we have a newly hovered mustang, update its target position to the center
+    if (this.hoverMustang && this.centeringEnabled) {
+      this.hoverMustang.targetX = this.centerX;
+      this.hoverMustang.targetY = this.centerY;
+    }
   }
 }
