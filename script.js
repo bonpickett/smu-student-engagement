@@ -968,24 +968,7 @@ class MustangsEngagementArt {
       
       // Draw the SVG image
       p.imageMode(p.CENTER);
-      
-      // Try to avoid using getImageData by using a different approach for tinting
-      // This won't actually fix the warning but attempts to reduce its frequency
-      // Instead of using tint() and then image(), we create a copy and apply color manually
-      // (This is a workaround that might reduce the frequency of the warning)
-      try {
-        // Handle tinting manually to avoid excessive getImageData calls
-        // Copy the image to a temporary graphic
-        const tempGraphic = p.createGraphics(targetWidth, targetHeight);
-        tempGraphic.image(mustangSvg, 0, 0, targetWidth, targetHeight);
-        
-        // Now draw to main canvas
-        p.image(tempGraphic, 0, 0, targetWidth, targetHeight);
-        tempGraphic.remove(); // Clean up
-      } catch (e) {
-        // Fallback to regular image if the approach above doesn't work
-        p.image(mustangSvg, 0, 0, targetWidth, targetHeight);
-      }
+      p.image(mustangSvg, 0, 0, targetWidth, targetHeight);
     } else {
       // Fallback if SVG is not loaded - draw a simple shape
       p.noStroke();
@@ -1016,8 +999,19 @@ class MustangsEngagementArt {
       let percentTextY = groupTextY + mustang.size * 0.25;
       p.textSize(mustang.size * 0.20);
       
-      // Yellow percentage text with no outline
-      p.fill(this.smuYellow[0], this.smuYellow[1], this.smuYellow[2], dimmed ? 180 : 255);
+      // Use white text with a dark outline for better visibility against yellow elements
+      // First draw outline/shadow
+      p.fill(0, 0, 0, dimmed ? 100 : 150);
+      for (let ox = -1; ox <= 1; ox += 1) {
+        for (let oy = -1; oy <= 1; oy += 1) {
+          if (ox !== 0 || oy !== 0) {
+            p.text(`${mustang.data.activeRatio.toFixed(1)}%`, mustang.x + ox, percentTextY + oy);
+          }
+        }
+      }
+      
+      // Then draw the white text on top
+      p.fill(255, 255, 255, dimmed ? 180 : 255);
       p.text(`${mustang.data.activeRatio.toFixed(1)}%`, mustang.x, percentTextY);
       
       p.pop();
