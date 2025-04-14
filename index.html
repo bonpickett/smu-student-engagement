@@ -3,58 +3,142 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SMU Community Network Engagement</title>
+  <title>SMU Engagement Tapestry</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="main-container">
-    <div class="header-container">
-      <h1 class="main-title">SMU Community Network Engagement</h1>
-      <div class="class-selector">
-        <button id="view-both" class="active">Both Classes</button>
-        <button id="view-2025">Class of 2025</button>
-        <button id="view-2026">Class of 2026</button>
+    <header>
+      <div class="title-section">
+        <h1>SMU Class of 2025</h1>
+        <h2>Engagement Tapestry</h2>
       </div>
-      <div class="main-info">Hover over any mustang to explore student engagement data across different community networks.</div>
-      <div class="legend">
-        <span class="legend-item">
-          <span class="legend-color" style="background-color: rgba(89, 195, 195, 0.8);"></span>
-          Community Circle = Average Total Groups per Student
-        </span>
-        <span class="legend-item">
-          <span class="legend-color" style="background-color: rgba(204, 0, 53, 0.8);"></span>
-          Connection Nodes = Active/Inactive Groups
-        </span>
-        <span class="legend-item">
-          <span class="legend-color" style="background-color: rgba(249, 200, 14, 0.8);"></span>
-          Person Icons = Active Members
-        </span>
-        <span class="legend-item">
-          <span class="legend-color" style="background-color: rgba(255, 255, 255, 0.8);"></span>
-          Percentage = Activity Ratio
-        </span>
+      
+      <div class="controls-section">
+        <div class="filter-options">
+          <label>Filter by:</label>
+          <button class="filter-btn active" data-filter="all">All Categories</button>
+          <button class="filter-btn" data-filter="academic">Academic</button>
+          <button class="filter-btn" data-filter="social">Social</button>
+          <button class="filter-btn" data-filter="professional">Professional</button>
+          <button class="filter-btn" data-filter="cultural">Cultural</button>
+          <button class="filter-btn" data-filter="athletic">Athletic</button>
+        </div>
+        
+        <div class="view-options">
+          <label>View:</label>
+          <button class="view-btn active" data-view="image">Mustang View</button>
+          <button class="view-btn" data-view="abstract">Abstract View</button>
+        </div>
+        
+        <div class="search-box">
+          <input type="text" id="student-search" placeholder="Search by student ID...">
+        </div>
       </div>
-      <div class="sub-legend">
-        <span>* Circle size represents the average number of groups per student in each range</span>
-      </div>
-    </div>
+    </header>
     
-    <div class="visualizations-container">
-      <div id="viz-2025" class="visualization">
-        <div class="info-container">
-          <div class="title">Class of 2025</div>
+    <div class="content-area">
+      <div class="canvas-container">
+        <div id="visualization-canvas" class="tapestry-canvas"></div>
+        <div class="zoom-controls">
+          <button id="zoom-in" class="zoom-btn">+</button>
+          <button id="zoom-out" class="zoom-btn">-</button>
+          <button id="reset-view" class="zoom-btn">Reset</button>
         </div>
       </div>
       
-      <div id="viz-2026" class="visualization">
-        <div class="info-container">
-          <div class="title">Class of 2026</div>
+      <div id="legend-panel" class="panel">
+        <h3>Tapestry Legend</h3>
+        <div class="legend-item">
+          <div class="legend-thread warp"></div>
+          <div class="legend-text">
+            <strong>Warp Threads:</strong> Primary engagement path
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-thread weft"></div>
+          <div class="legend-text">
+            <strong>Weft Threads:</strong> Cross-connections
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-knot"></div>
+          <div class="legend-text">
+            <strong>Knots:</strong> Individual events
+          </div>
+        </div>
+        
+        <h4>Thread Categories</h4>
+        <div class="legend-item">
+          <div class="thread-color academic"></div>
+          <span>Academic</span>
+        </div>
+        <div class="legend-item">
+          <div class="thread-color social"></div>
+          <span>Social</span>
+        </div>
+        <div class="legend-item">
+          <div class="thread-color professional"></div>
+          <span>Professional</span>
+        </div>
+        <div class="legend-item">
+          <div class="thread-color cultural"></div>
+          <span>Cultural</span>
+        </div>
+        <div class="legend-item">
+          <div class="thread-color athletic"></div>
+          <span>Athletic</span>
+        </div>
+        
+        <h4>Thread Properties</h4>
+        <div class="legend-item">
+          <div class="thread-property thickness"></div>
+          <span>Thickness = Total events</span>
+        </div>
+        <div class="legend-item">
+          <div class="thread-property texture"></div>
+          <span>Texture = Group diversity</span>
+        </div>
+        <div class="legend-item">
+          <div class="thread-property path"></div>
+          <span>Path = Engagement journey</span>
+        </div>
+        
+        <h4>Engagement Styles</h4>
+        <div class="legend-item">
+          <div class="style-icon sampler"></div>
+          <span>Sampler</span>
+        </div>
+        <div class="legend-item">
+          <div class="style-icon specialist"></div>
+          <span>Specialist</span>
+        </div>
+        <div class="legend-item">
+          <div class="style-icon super-connector"></div>
+          <span>Super Connector</span>
+        </div>
+        <div class="legend-item">
+          <div class="style-icon selective"></div>
+          <span>Selective</span>
         </div>
       </div>
+      
+      <div id="student-details" class="panel hidden">
+        <!-- This will be populated with selected student details -->
+      </div>
     </div>
+    
+    <footer>
+      <div class="footer-content">
+        <p>SMU Engagement Tapestry Data Visualization</p>
+        <p class="instructions">Click and drag to pan | Scroll to zoom | Click on a thread to see details</p>
+      </div>
+    </footer>
   </div>
   
   <script src="script.js"></script>
+  <script src="data-tapestry-fixed.js"></script>
+  <script src="main-script.js"></script>
 </body>
 </html>
