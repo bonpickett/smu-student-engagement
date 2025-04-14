@@ -23,7 +23,7 @@
 }
 
 body {
-  font-family: 'Montserrat', 'Arial', sans-serif;
+  font-family: 'Arial', sans-serif;
   color: var(--text-dark);
   background: linear-gradient(to bottom, #f8f8f8, #eaeaea);
   background-attachment: fixed;
@@ -197,7 +197,8 @@ label {
   grid-column: 2;
   grid-row: 1;
   overflow-y: auto;
-  height: 650px;
+  max-height: 650px;
+  height: auto;
 }
 
 #legend-panel {
@@ -210,6 +211,7 @@ label {
   right: 0;
   grid-column: 2;
   transition: transform 0.3s ease, opacity 0.3s ease;
+  z-index: 20;
 }
 
 #student-details.hidden {
@@ -251,7 +253,8 @@ h4 {
 .legend-item {
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 4px;
   font-size: 14px;
 }
 
@@ -282,6 +285,7 @@ h4 {
 .thread-color {
   width: 20px;
   height: 20px;
+  min-width: 20px;
   border-radius: 50%;
   margin-right: 12px;
 }
@@ -309,6 +313,7 @@ h4 {
 .thread-property {
   width: 30px;
   height: 15px;
+  min-width: 30px;
   margin-right: 12px;
   position: relative;
 }
@@ -345,6 +350,7 @@ h4 {
 .style-icon {
   width: 20px;
   height: 20px;
+  min-width: 20px;
   margin-right: 12px;
   border-radius: 3px;
   position: relative;
@@ -652,10 +658,6 @@ footer {
     width: 30px;
     height: 30px;
     font-size: 16px;
-  }
-  
-  #legend-panel {
-    display: none;
   }
   
   .metrics-grid {
