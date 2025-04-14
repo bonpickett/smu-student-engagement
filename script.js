@@ -172,38 +172,41 @@ const sketch2026 = function(p) {
 
 // Data for Class of 2025
 const class2025Data = [
-  { groupRange: "0-5", avgTotal: 2.2, avgActive: 1.6, activeRatio: 72.8 },
-  { groupRange: "6-9", avgTotal: 7.3, avgActive: 5.9, activeRatio: 81.3 },
-  { groupRange: "10-13", avgTotal: 11.3, avgActive: 9.8, activeRatio: 86.2 },
-  { groupRange: "14-17", avgTotal: 15.2, avgActive: 13.9, activeRatio: 90.8 },
-  { groupRange: "18-21", avgTotal: 19.3, avgActive: 17.0, activeRatio: 88.2 },
-  { groupRange: "22-25", avgTotal: 23.2, avgActive: 21.3, activeRatio: 92.0 },
-  { groupRange: "26-29", avgTotal: 28.1, avgActive: 25.2, activeRatio: 89.8 },
-  { groupRange: "30-33", avgTotal: 31.2, avgActive: 27.0, activeRatio: 86.4 },
-  { groupRange: "34-37", avgTotal: 37.0, avgActive: 31.0, activeRatio: 83.8 },
-  { groupRange: "38-41", avgTotal: 39.2, avgActive: 35.2, activeRatio: 89.7 },
-  { groupRange: "42-45", avgTotal: 43.0, avgActive: 39.0, activeRatio: 90.6 },
-  { groupRange: "50-59", avgTotal: 50.0, avgActive: 45.0, activeRatio: 90.0 }
-];
-
-// Data for Class of 2026
-const class2026Data = [
-  { groupRange: "0-5", avgTotal: 3.8, avgActive: 0.1, activeRatio: 1.7 },
-  { groupRange: "6-9", avgTotal: 7.9, avgActive: 0.9, activeRatio: 11.0 },
-  { groupRange: "10-13", avgTotal: 11.5, avgActive: 2.3, activeRatio: 20.3 },
-  { groupRange: "14-17", avgTotal: 15.5, avgActive: 3.8, activeRatio: 24.5 },
-  { groupRange: "18-21", avgTotal: 19.5, avgActive: 5.0, activeRatio: 25.7 },
-  { groupRange: "22-25", avgTotal: 23.6, avgActive: 6.2, activeRatio: 26.3 },
-  { groupRange: "26-29", avgTotal: 27.4, avgActive: 7.0, activeRatio: 25.5 },
-  { groupRange: "30-33", avgTotal: 31.4, avgActive: 8.1, activeRatio: 25.6 },
-  { groupRange: "34-37", avgTotal: 35.5, avgActive: 9.5, activeRatio: 26.9 },
-  { groupRange: "38-41", avgTotal: 39.4, avgActive: 9.8, activeRatio: 24.9 },
-  { groupRange: "42-45", avgTotal: 43.6, avgActive: 15.0, activeRatio: 34.3 },
-  { groupRange: "46-49", avgTotal: 47.7, avgActive: 10.9, activeRatio: 22.8 },
-  { groupRange: "50-59", avgTotal: 54.3, avgActive: 12.8, activeRatio: 23.6 },
-  { groupRange: "60-69", avgTotal: 64.5, avgActive: 11.1, activeRatio: 17.2 },
-  { groupRange: "70+", avgTotal: 79.0, avgActive: 7.0, activeRatio: 8.4 }
-];
+    { groupRange: "0-5", avgTotal: 2.2, avgActive: 1.6, activeRatio: 72.8 },
+    { groupRange: "6-9", avgTotal: 7.3, avgActive: 5.9, activeRatio: 81.3 },
+    { groupRange: "10-13", avgTotal: 11.3, avgActive: 9.8, activeRatio: 86.2 },
+    { groupRange: "14-17", avgTotal: 15.2, avgActive: 13.9, activeRatio: 90.8 },
+    { groupRange: "18-21", avgTotal: 19.3, avgActive: 17.0, activeRatio: 88.2 },
+    { groupRange: "22-25", avgTotal: 23.2, avgActive: 21.3, activeRatio: 92.0 },
+    { groupRange: "26-29", avgTotal: 28.1, avgActive: 25.2, activeRatio: 89.8 },
+    { groupRange: "30-33", avgTotal: 31.2, avgActive: 27.0, activeRatio: 86.4 },
+    { groupRange: "34-37", avgTotal: 37.0, avgActive: 31.0, activeRatio: 83.8 },
+    { groupRange: "38-41", avgTotal: 39.2, avgActive: 35.2, activeRatio: 89.7 },
+    { groupRange: "42-45", avgTotal: 43.0, avgActive: 39.0, activeRatio: 90.6 },
+    { groupRange: "46-49", avgTotal: 45.0, avgActive: 40.5, activeRatio: 90.0 }, // Added missing range
+    { groupRange: "50-59", avgTotal: 50.0, avgActive: 45.0, activeRatio: 90.0 },
+    { groupRange: "60-69", avgTotal: 65.0, avgActive: 58.5, activeRatio: 90.0 }, // Added missing range
+    { groupRange: "70+", avgTotal: 75.0, avgActive: 67.5, activeRatio: 90.0 }    // Added missing range
+  ];
+  
+  // Data for Class of 2026
+  const class2026Data = [
+    { groupRange: "0-5", avgTotal: 3.8, avgActive: 0.1, activeRatio: 1.7 },
+    { groupRange: "6-9", avgTotal: 7.9, avgActive: 0.9, activeRatio: 11.0 },
+    { groupRange: "10-13", avgTotal: 11.5, avgActive: 2.3, activeRatio: 20.3 },
+    { groupRange: "14-17", avgTotal: 15.5, avgActive: 3.8, activeRatio: 24.5 },
+    { groupRange: "18-21", avgTotal: 19.5, avgActive: 5.0, activeRatio: 25.7 },
+    { groupRange: "22-25", avgTotal: 23.6, avgActive: 6.2, activeRatio: 26.3 },
+    { groupRange: "26-29", avgTotal: 27.4, avgActive: 7.0, activeRatio: 25.5 },
+    { groupRange: "30-33", avgTotal: 31.4, avgActive: 8.1, activeRatio: 25.6 },
+    { groupRange: "34-37", avgTotal: 35.5, avgActive: 9.5, activeRatio: 26.9 },
+    { groupRange: "38-41", avgTotal: 39.4, avgActive: 9.8, activeRatio: 24.9 },
+    { groupRange: "42-45", avgTotal: 43.6, avgActive: 15.0, activeRatio: 34.3 },
+    { groupRange: "46-49", avgTotal: 47.7, avgActive: 10.9, activeRatio: 22.8 },
+    { groupRange: "50-59", avgTotal: 54.3, avgActive: 12.8, activeRatio: 23.6 },
+    { groupRange: "60-69", avgTotal: 64.5, avgActive: 11.1, activeRatio: 17.2 },
+    { groupRange: "70+", avgTotal: 79.0, avgActive: 7.0, activeRatio: 8.4 }
+  ];
 
 // Visualization class - using SMU-themed community network representation
 class MustangsEngagementArt {
@@ -444,7 +447,7 @@ class MustangsEngagementArt {
     
     // Create a grid layout for mustangs with adjusted spacing
     // Using fewer columns and rows to make everything larger
-    const rows = 3;
+    const rows = 4;
     const cols = 4; // Reduced from 5 to 4 to make each item larger
     const totalMustangs = this.studentData.length;
     
@@ -582,7 +585,7 @@ class MustangsEngagementArt {
     this.centerY = p.height / 2;
     
     // Recalculate grid layout with adjusted spacing
-    const rows = 3;
+    const rows = 4;
     const cols = 4; // Reduced from 5 to 4
     
     // Use consistent values for both visualizations
