@@ -172,7 +172,7 @@ canvas {
   }
 }
 
-/* Single view mode */
+/* Single view mode - Modified to ensure all content is visible */
 .single-view .visualization {
   display: none;
 }
@@ -180,7 +180,8 @@ canvas {
 .single-view .visualization.active {
   display: block;
   width: 100%;
-  height: calc(100vh - 120px);
+  height: calc(100vh - 140px); /* Increased from 120px to ensure bottom row visibility */
+  min-height: 600px; /* Minimum height to ensure all rows are visible */
 }
 
 /* Compare mode */
@@ -188,4 +189,15 @@ canvas {
   .compare-mode .visualization {
     width: 50%;
   }
+}
+
+/* Ensure the full visualization can be seen without scrolling */
+body.single-view-mode {
+  overflow-y: auto; /* Allow scrolling if needed */
+  min-height: 100vh;
+}
+
+/* Additional adjustment to ensure single view has enough height */
+.single-view {
+  min-height: 80vh;
 }

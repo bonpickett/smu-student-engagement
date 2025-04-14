@@ -64,6 +64,9 @@ function setView(view) {
     document.getElementById('viz-2025').classList.remove('active');
     document.getElementById('viz-2026').classList.remove('active');
     document.getElementById(`viz-${view}`).classList.add('active');
+    
+    // For single view mode, make sure the visualization container has enough height
+    container.style.minHeight = "80vh"; // Ensure there's enough vertical space
   }
   
   // Resize visualizations after changing view
@@ -457,15 +460,18 @@ class MustangsEngagementArt {
     const totalMustangs = this.studentData.length;
     
     // Use a consistent starting point for both visualizations
-    // This ensures proper alignment between classes
-    const startY = p.height * 0.15; // Start at 15% from the top for both classes
+    // Ensure there's enough space at the bottom by positioning relative to total height
+    // For the "both" view, we need to add more space at the top for the titles
+    const isBothView = currentView === 'both';
+    const startY = p.height * (isBothView ? 0.17 : 0.1); // Start higher in single view, lower in both view
     
     // Define consistent spacing for both classes
-    const availableHeight = p.height * 0.9;
+    // Use a smaller portion of the available height to ensure all rows fit
+    const availableHeight = p.height * 0.85; // Increased from 0.9 to avoid cutoff
     
     // Calculate spacing based on available space
     const gridSpacingX = p.width * 0.8 / (cols - 1);
-    const gridSpacingY = availableHeight * 0.8 / (rows - 1);
+    const gridSpacingY = availableHeight / rows; // Changed to divide by rows instead of rows-1
     
     const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
     
@@ -600,13 +606,18 @@ class MustangsEngagementArt {
     const rows = 4;
     const cols = 4; // Reduced from 5 to 4
     
-    // Use consistent values for both visualizations
-    const availableHeight = p.height * 0.9;
+    // Adjust these values to ensure all rows are visible in single-view mode
+    // Use a larger portion of the available height
+    const availableHeight = p.height * 0.85; // Increased from 0.9 to ensure all content fits
     const gridSpacingX = p.width * 0.8 / (cols - 1);
-    const gridSpacingY = availableHeight * 0.8 / (rows - 1);
+    const gridSpacingY = availableHeight / rows; // Use full division by rows to space items evenly
     
     const startX = this.centerX - (gridSpacingX * (cols - 1)) / 2;
-    const startY = p.height * 0.15; // Adjusted starting point
+    
+    // Adjust starting Y position based on view mode
+    // When in "both" view, we need more space at the top for the titles
+    const isBothView = currentView === 'both';
+    const startY = p.height * (isBothView ? 0.17 : 0.1); // Start higher in single view, lower in both view
     
     // Calculate the maximum mustang size and circle sizes
     const maxMustangSize = Math.min(gridSpacingX * 0.4, gridSpacingY * 0.4);
