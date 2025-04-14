@@ -384,7 +384,7 @@ class MustangsEngagementArt {
     const startY = p.height * 0.18; // Consistent starting point
     
     // Calculate the maximum mustang size based on spacing to prevent overlap
-    const maxSize = Math.min(gridSpacingX * 0.5, gridSpacingY * 0.5);
+    const maxMustangSize = Math.min(gridSpacingX * 0.5, gridSpacingY * 0.5);
     const maxOrbitRadius = Math.min(gridSpacingX, gridSpacingY) * 0.2;
     
     // Reposition mustangs
@@ -399,7 +399,7 @@ class MustangsEngagementArt {
       // Recalculate size to prevent overlap
       const maxGroupCount = this.studentData === class2026Data ? 80 : 50;
       const baseSize = p.map(p.sqrt(mustang.data.avgTotal), 0, p.sqrt(maxGroupCount), 30, 100);
-      mustang.size = Math.min(baseSize, maxSize);
+      mustang.size = Math.min(baseSize, maxMustangSize);
       
       // Update orbit distances for groups
       for (let group of this.activeGroups) {
