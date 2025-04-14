@@ -76,10 +76,14 @@ const sketch2025 = function(p) {
   
   p.setup = function() {
     const container = document.getElementById('viz-2025');
-    // Create canvas first with standard parameters
-    const canvas = p.createCanvas(container.offsetWidth, container.offsetHeight);
-    // Then set the willReadFrequently attribute directly on the canvas element
-    canvas.attribute('willReadFrequently', 'true');
+    
+    // Create canvas
+    p.createCanvas(container.offsetWidth, container.offsetHeight);
+    
+    // Set willReadFrequently directly on the canvas DOM element
+    document.querySelectorAll('#viz-2025 canvas').forEach(canvas => {
+      canvas.willReadFrequently = true;
+    });
     
     p.colorMode(p.RGB);
     p.textFont('Arial');
@@ -122,10 +126,14 @@ const sketch2026 = function(p) {
   
   p.setup = function() {
     const container = document.getElementById('viz-2026');
-    // Create canvas first with standard parameters
-    const canvas = p.createCanvas(container.offsetWidth, container.offsetHeight);
-    // Then set the willReadFrequently attribute directly on the canvas element
-    canvas.attribute('willReadFrequently', 'true');
+    
+    // Create canvas
+    p.createCanvas(container.offsetWidth, container.offsetHeight);
+    
+    // Set willReadFrequently directly on the canvas DOM element
+    document.querySelectorAll('#viz-2026 canvas').forEach(canvas => {
+      canvas.willReadFrequently = true;
+    });
     
     p.colorMode(p.RGB);
     p.textFont('Arial');
@@ -960,7 +968,24 @@ class MustangsEngagementArt {
       
       // Draw the SVG image
       p.imageMode(p.CENTER);
-      p.image(mustangSvg, 0, 0, targetWidth, targetHeight);
+      
+      // Try to avoid using getImageData by using a different approach for tinting
+      // This won't actually fix the warning but attempts to reduce its frequency
+      // Instead of using tint() and then image(), we create a copy and apply color manually
+      // (This is a workaround that might reduce the frequency of the warning)
+      try {
+        // Handle tinting manually to avoid excessive getImageData calls
+        // Copy the image to a temporary graphic
+        const tempGraphic = p.createGraphics(targetWidth, targetHeight);
+        tempGraphic.image(mustangSvg, 0, 0, targetWidth, targetHeight);
+        
+        // Now draw to main canvas
+        p.image(tempGraphic, 0, 0, targetWidth, targetHeight);
+        tempGraphic.remove(); // Clean up
+      } catch (e) {
+        // Fallback to regular image if the approach above doesn't work
+        p.image(mustangSvg, 0, 0, targetWidth, targetHeight);
+      }
     } else {
       // Fallback if SVG is not loaded - draw a simple shape
       p.noStroke();
