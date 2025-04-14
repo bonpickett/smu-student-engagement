@@ -1125,7 +1125,7 @@ class MustangsEngagementArt {
     p.stroke(this.smuRed[0], this.smuRed[1], this.smuRed[2]);
     p.strokeWeight(2);
     p.rectMode(p.CORNER);
-    p.rect(infoX, infoY, infoWidth, 140, 10);
+    p.rect(infoX, infoY, infoWidth, 170, 10); // Increased height to accommodate additional info
     
     // Add community theme detail to info panel
     p.strokeWeight(1);
@@ -1156,6 +1156,11 @@ class MustangsEngagementArt {
     
     p.fill(this.smuTeal[0], this.smuTeal[1], this.smuTeal[2]);
     p.text(`Inactive Groups: ${(data.avgTotal - data.avgActive).toFixed(1)}`, infoX + 12, infoY + 102);
+    
+    // Add circle size explanation with the actual value
+    p.fill(this.smuTeal[0], this.smuTeal[1], this.smuTeal[2], 220);
+    p.textSize(16);
+    p.text(`Circle Size = ${data.avgTotal.toFixed(1)} Avg. Groups per Student`, infoX + 12, infoY + 132);
   }
   
   checkHover(x, y) {
