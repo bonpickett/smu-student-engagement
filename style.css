@@ -6,6 +6,9 @@
   --smu-red: rgb(204, 0, 53);
   --smu-yellow: rgb(249, 200, 14);
   --smu-teal: rgb(89, 195, 195);
+  --smu-green: rgb(76, 175, 80);
+  --smu-purple: rgb(180, 100, 180);
+  --smu-orange: rgb(255, 152, 0);
   --text-dark: #333;
   --text-light: #ffffff;
   --background-color: #f8f8f8;
@@ -71,7 +74,17 @@ h2 {
   display: flex;
   flex-direction: column;
   gap: 15px;
+}
+
+/* Left panel should be scrollable */
+.left-panel {
   overflow-y: auto;
+  max-height: calc(100vh - 150px);
+}
+
+/* Right panel should not scroll */
+.right-panel {
+  overflow-y: visible;
 }
 
 /* Panel sections */
@@ -202,29 +215,49 @@ button:hover {
   font-size: 13px;
 }
 
-/* Category color samples */
-.color-sample.academic {
+/* Category color samples - Updated for new categories */
+.color-sample.Academic\/Educational\/Learning, .color-sample[class*="Academic"] {
   background-color: var(--smu-blue);
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.color-sample.social {
+.color-sample.Social, .color-sample[class*="Social"] {
   background-color: var(--smu-yellow);
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.color-sample.professional {
+.color-sample.Meeting\/Group\ Business, .color-sample[class*="Meeting"] {
   background-color: var(--smu-teal);
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.color-sample.cultural {
-  background-color: #808080; /* Gray */
+.color-sample.Career\/Professional, .color-sample[class*="Career"], .color-sample[class*="Professional"] {
+  background-color: var(--smu-teal);
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.color-sample.athletic {
+.color-sample.Cultural, .color-sample[class*="Cultural"] {
+  background-color: var(--smu-purple);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.color-sample.Athletic\/Sport, .color-sample[class*="Athletic"], .color-sample[class*="Sport"] {
   background-color: var(--smu-red);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.color-sample.Service\/Volunteer, .color-sample[class*="Service"], .color-sample[class*="Volunteer"] {
+  background-color: var(--smu-green);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.color-sample.Entertainment, .color-sample[class*="Entertainment"] {
+  background-color: var(--smu-orange);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.color-sample.Other, .color-sample[class*="Other"] {
+  background-color: #808080;
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
@@ -322,6 +355,7 @@ button:hover {
   height: 100%;
   overflow: hidden;
   position: relative;
+  background-color: rgba(253, 253, 253, 0.9);
 }
 
 canvas {
@@ -456,24 +490,41 @@ canvas {
   height: 100%;
 }
 
-.stats-bar-fill.academic {
+/* Updated category bar fills with the new categories */
+.stats-bar-fill.Academic\/Educational\/Learning, .stats-bar-fill[class*="Academic"] {
   background-color: var(--smu-blue);
 }
 
-.stats-bar-fill.social {
+.stats-bar-fill.Social, .stats-bar-fill[class*="Social"] {
   background-color: var(--smu-yellow);
 }
 
-.stats-bar-fill.professional {
+.stats-bar-fill.Meeting\/Group\ Business, .stats-bar-fill[class*="Meeting"] {
   background-color: var(--smu-teal);
 }
 
-.stats-bar-fill.cultural {
-  background-color: #808080;
+.stats-bar-fill.Career\/Professional, .stats-bar-fill[class*="Career"], .stats-bar-fill[class*="Professional"] {
+  background-color: var(--smu-teal);
 }
 
-.stats-bar-fill.athletic {
+.stats-bar-fill.Cultural, .stats-bar-fill[class*="Cultural"] {
+  background-color: var(--smu-purple);
+}
+
+.stats-bar-fill.Athletic\/Sport, .stats-bar-fill[class*="Athletic"], .stats-bar-fill[class*="Sport"] {
   background-color: var(--smu-red);
+}
+
+.stats-bar-fill.Service\/Volunteer, .stats-bar-fill[class*="Service"], .stats-bar-fill[class*="Volunteer"] {
+  background-color: var(--smu-green);
+}
+
+.stats-bar-fill.Entertainment, .stats-bar-fill[class*="Entertainment"] {
+  background-color: var(--smu-orange);
+}
+
+.stats-bar-fill.Other, .stats-bar-fill[class*="Other"] {
+  background-color: #808080;
 }
 
 .stats-bar-value {
@@ -656,24 +707,41 @@ canvas {
   height: 100%;
 }
 
-.bar-fill.academic {
+/* Updated interest bars for new categories */
+.bar-fill.Academic\/Educational\/Learning, .bar-fill[class*="Academic"] {
   background-color: var(--smu-blue);
 }
 
-.bar-fill.social {
+.bar-fill.Social, .bar-fill[class*="Social"] {
   background-color: var(--smu-yellow);
 }
 
-.bar-fill.professional {
+.bar-fill.Meeting\/Group\ Business, .bar-fill[class*="Meeting"] {
   background-color: var(--smu-teal);
 }
 
-.bar-fill.cultural {
-  background-color: rgb(180, 100, 180);
+.bar-fill.Career\/Professional, .bar-fill[class*="Career"], .bar-fill[class*="Professional"] {
+  background-color: var(--smu-teal);
 }
 
-.bar-fill.athletic {
+.bar-fill.Cultural, .bar-fill[class*="Cultural"] {
+  background-color: var(--smu-purple);
+}
+
+.bar-fill.Athletic\/Sport, .bar-fill[class*="Athletic"], .bar-fill[class*="Sport"] {
   background-color: var(--smu-red);
+}
+
+.bar-fill.Service\/Volunteer, .bar-fill[class*="Service"], .bar-fill[class*="Volunteer"] {
+  background-color: var(--smu-green);
+}
+
+.bar-fill.Entertainment, .bar-fill[class*="Entertainment"] {
+  background-color: var(--smu-orange);
+}
+
+.bar-fill.Other, .bar-fill[class*="Other"] {
+  background-color: #808080;
 }
 
 .bar-value {
@@ -701,29 +769,50 @@ canvas {
   font-size: 10px;
 }
 
-.event-category.academic {
+/* Updated event category styles for the details panel */
+.event-category.Academic\/Educational\/Learning, .event-category[class*="Academic"] {
   background-color: rgba(53, 76, 161, 0.1);
   color: var(--smu-blue);
 }
 
-.event-category.social {
+.event-category.Social, .event-category[class*="Social"] {
   background-color: rgba(249, 200, 14, 0.1);
   color: rgb(180, 150, 10);
 }
 
-.event-category.professional {
+.event-category.Meeting\/Group\ Business, .event-category[class*="Meeting"] {
   background-color: rgba(89, 195, 195, 0.1);
   color: var(--smu-teal);
 }
 
-.event-category.cultural {
-  background-color: rgba(180, 100, 180, 0.1);
-  color: rgb(180, 100, 180);
+.event-category.Career\/Professional, .event-category[class*="Career"], .event-category[class*="Professional"] {
+  background-color: rgba(0, 150, 136, 0.1);
+  color: rgb(0, 150, 136);
 }
 
-.event-category.athletic {
+.event-category.Cultural, .event-category[class*="Cultural"] {
+  background-color: rgba(180, 100, 180, 0.1);
+  color: var(--smu-purple);
+}
+
+.event-category.Athletic\/Sport, .event-category[class*="Athletic"], .event-category[class*="Sport"] {
   background-color: rgba(204, 0, 53, 0.1);
   color: var(--smu-red);
+}
+
+.event-category.Service\/Volunteer, .event-category[class*="Service"], .event-category[class*="Volunteer"] {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--smu-green);
+}
+
+.event-category.Entertainment, .event-category[class*="Entertainment"] {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: var(--smu-orange);
+}
+
+.event-category.Other, .event-category[class*="Other"] {
+  background-color: rgba(128, 128, 128, 0.1);
+  color: #808080;
 }
 
 /* Footer */

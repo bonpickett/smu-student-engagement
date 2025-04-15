@@ -3,18 +3,34 @@
  * Processes the real event attendance data from CSV
  */
 
-// Constants for data generation and mapping
-const CATEGORIES = ['academic', 'social', 'professional', 'cultural', 'athletic'];
+// Constants for data management and mapping
+// Define in the same order as they should appear in the visualization
+const CATEGORIES = [
+  'Academic/Educational/Learning',
+  'Social',
+  'Meeting/Group Business',
+  'Cultural',
+  'Athletic/Sport',
+  'Career/Professional',
+  'Service/Volunteer',
+  'Entertainment',
+  'Other'
+];
+
 const STYLES = ['sampler', 'specialist', 'super-connector', 'selective'];
 const MONTHS = 12; // 12 months in a year
 
 // Color mapping (for visualization)
 const CATEGORY_COLORS = {
-  academic: [53, 76, 161],       // SMU blue
-  social: [249, 200, 14],        // SMU yellow
-  professional: [89, 195, 195],  // SMU teal
-  cultural: [128, 128, 128],     // Gray
-  athletic: [204, 0, 53]         // SMU red
+  'Academic/Educational/Learning': [53, 76, 161],       // SMU blue
+  'Social': [249, 200, 14],                            // SMU yellow
+  'Meeting/Group Business': [89, 195, 195],            // SMU teal
+  'Cultural': [180, 100, 180],                         // Purple
+  'Athletic/Sport': [204, 0, 53],                      // SMU red
+  'Career/Professional': [0, 150, 136],                // Teal variant
+  'Service/Volunteer': [76, 175, 80],                  // Green
+  'Entertainment': [255, 152, 0],                      // Orange
+  'Other': [128, 128, 128]                             // Gray
 };
 
 const STYLE_PATTERNS = {
@@ -24,45 +40,55 @@ const STYLE_PATTERNS = {
   selective: { pattern: 'dashed', textureScale: 0.4 }
 };
 
-// Event type to category mapping
+// Event type normalization mapping
 const EVENT_TYPE_MAPPING = {
-  // We'll set these based on actual data types
-  'Academic': 'academic',
-  'Athletics': 'athletic',
-  'Career': 'professional',
-  'Cultural': 'cultural',
-  'Arts': 'cultural',
-  'Diversity': 'cultural',
-  'Community Service': 'social',
-  'Social': 'social',
-  'Leadership': 'professional',
-  'Wellness': 'social',
-  'Lecture': 'academic',
-  'Workshop': 'professional',
-  'Club Meeting': 'social',
+  // Map from CSV event types to our category system
+  'Academic/Educational/Learning': 'Academic/Educational/Learning',
+  'Social': 'Social',
+  'Meeting/Group Business': 'Meeting/Group Business',
+  'Cultural': 'Cultural',
+  'Athletic': 'Athletic/Sport',
+  'Sport': 'Athletic/Sport',
+  'Career': 'Career/Professional',
+  'Professional': 'Career/Professional',
+  'Career Development': 'Career/Professional',
+  'Service': 'Service/Volunteer',
+  'Volunteer': 'Service/Volunteer',
+  'Community Service': 'Service/Volunteer',
+  'Entertainment': 'Entertainment',
+  'Performance': 'Entertainment',
+  'Arts': 'Cultural',
+  'Diversity': 'Cultural',
+  'Leadership': 'Meeting/Group Business',
+  'Wellness': 'Social',
+  'Lecture': 'Academic/Educational/Learning',
+  'Workshop': 'Academic/Educational/Learning',
+  'Club Meeting': 'Meeting/Group Business',
   // Default category
-  'Other': 'social'
+  'Other': 'Other'
 };
 
 // Tags to category mapping for refinement
 const TAG_MAPPING = {
-  'academic': 'academic',
-  'research': 'academic',
-  'lecture': 'academic',
-  'study': 'academic',
-  'career': 'professional',
-  'networking': 'professional',
-  'leadership': 'professional',
-  'social': 'social',
-  'club': 'social',
-  'service': 'social',
-  'culture': 'cultural',
-  'international': 'cultural',
-  'arts': 'cultural',
-  'diversity': 'cultural',
-  'athletic': 'athletic',
-  'sports': 'athletic',
-  'fitness': 'athletic'
+  'academic': 'Academic/Educational/Learning',
+  'research': 'Academic/Educational/Learning',
+  'lecture': 'Academic/Educational/Learning',
+  'study': 'Academic/Educational/Learning',
+  'career': 'Career/Professional',
+  'networking': 'Career/Professional',
+  'leadership': 'Meeting/Group Business',
+  'social': 'Social',
+  'club': 'Meeting/Group Business',
+  'service': 'Service/Volunteer',
+  'volunteer': 'Service/Volunteer',
+  'culture': 'Cultural',
+  'international': 'Cultural',
+  'arts': 'Cultural',
+  'diversity': 'Cultural',
+  'athletic': 'Athletic/Sport',
+  'sports': 'Athletic/Sport',
+  'fitness': 'Athletic/Sport',
+  'entertainment': 'Entertainment'
 };
 
 // Class to manage student data
@@ -81,19 +107,26 @@ class StudentDataManager {
     this.rawEvents = [];
   }
   
-  // Process the CSV data
+  // Process the CSV data using fetch API instead of window.fs
   async processCSVData(callback) {
     console.log("Processing event attendance data...");
     
     try {
-      // Load the CSV data
-      const response = await window.fs.readFile('2025_eventattendance_4.7.25.csv', { encoding: 'utf8' });
+      // Load the CSV data using fetch
+      const response = await fetch('2025_eventattendance_4.7.25.csv');
+      if (!response.ok) {
+        throw new Error(`Failed to load CSV: ${response.status} ${response.statusText}`);
+      }
+      
+      const csvText = await response.text();
+      console.log("CSV data loaded successfully");
       
       // Parse the CSV
-      const parseResult = Papa.parse(response, {
+      const parseResult = Papa.parse(csvText, {
         header: true,
         dynamicTyping: true,
-        skipEmptyLines: true
+        skipEmptyLines: true,
+        delimitersToGuess: [',', '\t', '|', ';']
       });
       
       this.rawEvents = parseResult.data;
@@ -112,6 +145,7 @@ class StudentDataManager {
       
     } catch (error) {
       console.error("Error processing CSV data:", error);
+      console.log("Falling back to generated data...");
       // Fall back to generated data if CSV processing fails
       this.generateData(callback);
     }
@@ -203,9 +237,19 @@ class StudentDataManager {
   
   // Determine category from event type and tags
   determineCategory(eventType, eventTags) {
-    // First try to map by event type
-    if (EVENT_TYPE_MAPPING[eventType]) {
-      return EVENT_TYPE_MAPPING[eventType];
+    // Normalize event type to handle case variations
+    const normalizedType = eventType.trim();
+    
+    // First try direct mapping
+    if (EVENT_TYPE_MAPPING[normalizedType]) {
+      return EVENT_TYPE_MAPPING[normalizedType];
+    }
+    
+    // Try partial match for event type
+    for (const [key, value] of Object.entries(EVENT_TYPE_MAPPING)) {
+      if (normalizedType.includes(key)) {
+        return value;
+      }
     }
     
     // If that fails, try using tags
@@ -219,8 +263,8 @@ class StudentDataManager {
       }
     }
     
-    // Default to social as a fallback
-    return 'social';
+    // Default to Other as a fallback
+    return 'Other';
   }
   
   // Determine engagement style based on event pattern
@@ -392,7 +436,7 @@ class StudentDataManager {
   // Calculate the primary category based on event distribution
   calculatePrimaryCategory(categoryDistribution) {
     let maxCount = 0;
-    let primaryCategory = 'academic'; // Default
+    let primaryCategory = CATEGORIES[0]; // Default to first category
     
     for (const [category, count] of Object.entries(categoryDistribution)) {
       if (count > maxCount) {
@@ -413,34 +457,55 @@ class StudentDataManager {
     ];
     
     const eventsByCategory = {
-      academic: [
+      'Academic/Educational/Learning': [
         'Research Symposium', 'Study Group', 'Department Lecture', 
         'Academic Conference', 'Thesis Workshop', 'Library Workshop',
         'Exam Prep Session', 'Faculty Mixer', 'Honors Presentation'
       ],
-      social: [
+      'Social': [
         'Campus Club Fair', 'Residence Hall Social', 'Student Government',
-        'Campus Event Planning', 'Spring Festival', 'Community Service',
-        'Student Mixer', 'Campus Tour Guide', 'Social Club Meeting'
+        'Campus Event Planning', 'Spring Festival', 'Student Mixer', 
+        'Campus Tour Guide', 'Social Club Meeting'
       ],
-      professional: [
-        'Career Workshop', 'Leadership Summit', 'Industry Panel',
-        'Networking Event', 'Mock Interviews', 'Career Fair',
-        'Business Case Competition', 'Alumni Networking', 'Internship Seminar'
+      'Meeting/Group Business': [
+        'Committee Meeting', 'Board Meeting', 'Leadership Summit',
+        'Planning Session', 'Project Update', 'Club Business Meeting',
+        'Organization Direction Meeting', 'Executive Board Meeting'
       ],
-      cultural: [
+      'Career/Professional': [
+        'Career Workshop', 'Industry Panel', 'Networking Event',
+        'Mock Interviews', 'Career Fair', 'Business Case Competition',
+        'Alumni Networking', 'Internship Seminar'
+      ],
+      'Cultural': [
         'International Festival', 'Arts Exhibition', 'Theater Production',
         'Music Ensemble', 'Concert Performance', 'Cultural Celebration',
         'Diversity Workshop', 'Film Screening', 'Museum Visit'
       ],
-      athletic: [
+      'Athletic/Sport': [
         'Intramural Sports', 'Varsity Game', 'Team Training',
         'Championship Game', 'Rally Event', 'Sports Club',
         'Fitness Class', 'Athletic Fundraiser', 'Spirit Day'
+      ],
+      'Service/Volunteer': [
+        'Community Service', 'Volunteer Day', 'Food Drive',
+        'Charity Fundraiser', 'Habitat for Humanity', 'Campus Cleanup',
+        'Mentoring Program', 'Outreach Event'
+      ],
+      'Entertainment': [
+        'Comedy Show', 'Movie Night', 'Campus Concert',
+        'Talent Show', 'Game Night', 'DJ Event',
+        'Dance Party', 'Open Mic Night'
+      ],
+      'Other': [
+        'Campus Event', 'Special Event', 'Info Session',
+        'Resource Fair', 'Miscellaneous Meeting', 'Pop-up Event',
+        'Campus Walk', 'Vendor Fair'
       ]
     };
     
-    const events = eventsByCategory[category];
+    // If category doesn't exist in our mapping, use Other
+    const events = eventsByCategory[category] || eventsByCategory['Other'];
     const selectedEvent = events[Math.floor(Math.random() * events.length)];
     const monthName = monthNames[month - 1];
     
@@ -449,63 +514,126 @@ class StudentDataManager {
   
   // Create abstract positions for visualization based on student data
   createAbstractPositions() {
-    // Create clusters based on primary categories and styles
-    const categoryBands = {
-      academic: { centerY: 0.2, spreadY: 0.15 },
-      professional: { centerY: 0.35, spreadY: 0.15 },
-      social: { centerY: 0.5, spreadY: 0.15 },
-      cultural: { centerY: 0.65, spreadY: 0.15 },
-      athletic: { centerY: 0.8, spreadY: 0.15 }
-    };
+    // Define the specific order of categories to match the bands
+    const orderedCategories = [
+      'Academic/Educational/Learning',
+      'Social',
+      'Meeting/Group Business',
+      'Cultural',
+      'Athletic/Sport',
+      'Career/Professional',
+      'Service/Volunteer',
+      'Entertainment',
+      'Other'
+    ];
+    
+    // Assign vertical positioning based on primary categories
+    const categoryPositions = {};
+    const totalCategories = orderedCategories.length;
+    const bandHeight = 1.0 / totalCategories;
+    
+    // Create mapping of category to position
+    orderedCategories.forEach((category, index) => {
+      categoryPositions[category] = {
+        centerY: (index + 0.5) * bandHeight,
+        spreadY: bandHeight * 0.7  // Reduce vertical spread slightly
+      };
+    });
+    
+    // Count students per category for better distribution
+    const categoryStudentCounts = {};
+    orderedCategories.forEach(category => {
+      categoryStudentCounts[category] = 0;
+    });
+    
+    // Count students in each category
+    this.students.forEach(student => {
+      if (categoryStudentCounts[student.primaryCategory] !== undefined) {
+        categoryStudentCounts[student.primaryCategory]++;
+      }
+    });
     
     // Clear the existing positions
     this.positions = new Map();
     
+    // Track used positions to avoid overlap
+    const usedPositions = new Map();
+    const minDistance = 0.03; // Minimum distance between students
+    
     // Generate positions for each student
     for (const student of this.students) {
       // Get the primary category band
-      const band = categoryBands[student.primaryCategory];
+      const band = categoryPositions[student.primaryCategory] || 
+                 { centerY: 0.5, spreadY: 0.2 }; // Default if category not found
       
-      // Calculate base position with some randomness
-      const baseX = 0.1 + (Math.random() * 0.8); // Spread across x-axis
+      // Get count of students in this category
+      const categoryCount = categoryStudentCounts[student.primaryCategory] || 1;
       
-      // Adjust y based on category but with some randomness
-      const bandY = band.centerY + (Math.random() * band.spreadY - band.spreadY/2);
+      // Determine spread factor based on number of students in category
+      // More students = more spread out horizontally
+      const spreadFactor = Math.min(0.9, Math.max(0.6, 
+                         0.6 + (categoryCount / this.students.length)));
       
-      // Adjust position slightly based on style
-      let x = baseX;
-      let y = bandY;
+      // Try to find a non-overlapping position
+      let positionFound = false;
+      let attempts = 0;
+      let x, y;
       
-      // Add some clustering based on style
-      switch (student.style) {
-        case 'sampler':
-          // Samplers are more scattered
-          x += (Math.random() - 0.5) * 0.1;
-          y += (Math.random() - 0.5) * 0.1;
-          break;
+      while (!positionFound && attempts < 10) {
+        // Calculate base position with better spread
+        x = 0.05 + (Math.random() * spreadFactor); // Spread across x-axis
         
-        case 'specialist':
-          // Specialists cluster more tightly in their category band
-          y = band.centerY + (Math.random() * band.spreadY * 0.5 - band.spreadY * 0.25);
-          break;
+        // Adjust y based on category with controlled randomness
+        y = band.centerY + (Math.random() * band.spreadY - band.spreadY/2);
+        
+        // Adjust position slightly based on style with less variation
+        switch (student.style) {
+          case 'sampler':
+            // Samplers are slightly scattered
+            x += (Math.random() - 0.5) * 0.05; // Reduced scatter
+            y += (Math.random() - 0.5) * 0.05;
+            break;
           
-        case 'super-connector':
-          // Super-connectors tend to bridge between categories
-          y = band.centerY + (Math.random() * band.spreadY * 1.5 - band.spreadY * 0.75);
-          break;
+          case 'specialist':
+            // Specialists cluster more tightly in their category band
+            y = band.centerY + (Math.random() * band.spreadY * 0.5 - band.spreadY * 0.25);
+            break;
+            
+          case 'super-connector':
+            // Super-connectors tend to bridge between categories but less extreme
+            y = band.centerY + (Math.random() * band.spreadY - band.spreadY/2);
+            break;
+            
+          case 'selective':
+            // Selectives have less tight clusters
+            x = 0.1 + Math.floor(Math.random() * 8) * 0.1 + (Math.random() - 0.5) * 0.02;
+            break;
+        }
+        
+        // Ensure positions stay within bounds
+        x = Math.max(0.05, Math.min(0.95, x));
+        y = Math.max(0.05, Math.min(0.95, y));
+        
+        // Check if position is too close to existing positions
+        positionFound = true;
+        for (const [existingId, existingPos] of usedPositions.entries()) {
+          const distance = Math.sqrt(
+            Math.pow(existingPos.x - x, 2) + 
+            Math.pow(existingPos.y - y, 2)
+          );
           
-        case 'selective':
-          // Selectives have small tight clusters
-          x = 0.2 + Math.floor(Math.random() * 4) * 0.2 + (Math.random() - 0.5) * 0.05;
-          break;
+          if (distance < minDistance) {
+            positionFound = false;
+            break;
+          }
+        }
+        
+        attempts++;
       }
-      
-      // Ensure positions stay within bounds
-      x = Math.max(0.05, Math.min(0.95, x));
-      y = Math.max(0.05, Math.min(0.95, y));
       
       // Store the position
       this.positions.set(student.id, { x, y, fixed: false });
+      usedPositions.set(student.id, { x, y });
     }
   }
   

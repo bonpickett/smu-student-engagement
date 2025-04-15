@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SMU Spirit Evolution</title>
   <link rel="stylesheet" href="style.css">
+  <!-- Add PapaParse CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -37,11 +39,15 @@
             <label for="filter-category">Filter:</label>
             <select id="filter-category">
               <option value="all">All Categories</option>
-              <option value="academic">Academic</option>
-              <option value="social">Social</option>
-              <option value="professional">Professional</option>
-              <option value="cultural">Cultural</option>
-              <option value="athletic">Athletic</option>
+              <option value="Academic/Educational/Learning">Academic</option>
+              <option value="Social">Social</option>
+              <option value="Meeting/Group Business">Meetings</option>
+              <option value="Career/Professional">Professional</option>
+              <option value="Cultural">Cultural</option>
+              <option value="Athletic/Sport">Athletic</option>
+              <option value="Service/Volunteer">Service</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Other">Other</option>
             </select>
           </div>
           
@@ -56,11 +62,15 @@
           <div class="legend-items">
             <div class="legend-group">
               <h4>Categories</h4>
-              <div class="legend-item"><div class="color-sample academic"></div><span>Academic: Research, lectures, study groups</span></div>
-              <div class="legend-item"><div class="color-sample social"></div><span>Social: Clubs, events, community service</span></div>
-              <div class="legend-item"><div class="color-sample professional"></div><span>Professional: Career workshops, networking</span></div>
-              <div class="legend-item"><div class="color-sample cultural"></div><span>Cultural: Arts, music, diversity events</span></div>
-              <div class="legend-item"><div class="color-sample athletic"></div><span>Athletic: Sports, fitness, team activities</span></div>
+              <div class="legend-item"><div class="color-sample Academic/Educational/Learning"></div><span>Academic: Lectures, workshops, learning</span></div>
+              <div class="legend-item"><div class="color-sample Social"></div><span>Social: Social events, networking</span></div>
+              <div class="legend-item"><div class="color-sample Meeting/Group Business"></div><span>Meetings: Group business, planning</span></div>
+              <div class="legend-item"><div class="color-sample Cultural"></div><span>Cultural: Arts, music, diversity events</span></div>
+              <div class="legend-item"><div class="color-sample Athletic/Sport"></div><span>Athletic: Sports, fitness activities</span></div>
+              <div class="legend-item"><div class="color-sample Career/Professional"></div><span>Professional: Career workshops, networking</span></div>
+              <div class="legend-item"><div class="color-sample Service/Volunteer"></div><span>Service: Volunteering, community service</span></div>
+              <div class="legend-item"><div class="color-sample Entertainment"></div><span>Entertainment: Social entertainment events</span></div>
+              <div class="legend-item"><div class="color-sample Other"></div><span>Other: Miscellaneous events</span></div>
             </div>
             
             <div class="legend-group">

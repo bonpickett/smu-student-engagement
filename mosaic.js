@@ -28,7 +28,7 @@ class SpiritMosaic {
     this.viewY = 0;
     this.minZoom = 0.2;
     this.maxZoom = 5.0;
-    this.tileSize = 18; // Base size for tiles
+    this.tileSize = 12; // Reduced base size for tiles (was 18)
     
     // Display settings
     this.displayMode = 'evolution'; // Only evolution view
@@ -258,17 +258,20 @@ class SpiritMosaic {
   
   // Calculate the size of a student tile based on engagement level
   getTileSize(student) {
-    // Base size varies by number of events - Use more consistent sizing
+    // Base size - much smaller than before
+    const baseSize = this.tileSize * 0.6; // Reduce base size
+    
+    // Slightly scale based on events, but with much less variation
     const eventCount = student.events.length;
-    let size = this.tileSize * (0.8 + (eventCount / 20)); // More subtle scaling
+    let size = baseSize * (0.8 + (eventCount / 40)); // Much more subtle scaling
     
     // Increase size for selected student
     if (student.id === this.selectedStudentId) {
-      size *= 1.5;
+      size *= 1.3; // Less increase
     } 
     // Slightly increase size for hovered student
     else if (student.id === this.hoveredStudentId) {
-      size *= 1.2;
+      size *= 1.1; // Less increase
     }
     
     return size;
@@ -366,19 +369,50 @@ class SpiritMosaic {
   
   // Draw background category bands with more prominent distinction
   drawCategoryBands() {
-    const categoryBands = {
-      academic: { centerY: 0.2, label: "Academic" },
-      professional: { centerY: 0.35, label: "Professional" },
-      social: { centerY: 0.5, label: "Social" },
-      cultural: { centerY: 0.65, label: "Cultural" },
-      athletic: { centerY: 0.8, label: "Athletic" }
-    };
+    // Define the categories in the specific order we want them displayed
+    const orderedCategories = [
+      'Academic/Educational/Learning',
+      'Social',
+      'Meeting/Group Business',
+      'Cultural',
+      'Athletic/Sport',
+      'Career/Professional',
+      'Service/Volunteer',
+      'Entertainment',
+      'Other'
+    ];
+    
+    // Ensure we have at least these categories even if CATEGORIES is not available
+    const categoryBands = {};
+    
+    // Calculate positions for each category
+    const totalCategories = orderedCategories.length;
+    const bandHeight = 1.0 / totalCategories;
+    
+    orderedCategories.forEach((category, index) => {
+      // Create label from category - handle long category names
+      let label = category;
+      // Shorten long category names
+      if (category.includes('/')) {
+        label = category.split('/')[0];
+      }
+      
+      categoryBands[category] = {
+        centerY: (index + 0.5) * bandHeight,
+        label: label
+      };
+    });
     
     // Draw bands as more visible background sections with borders
     for (const [category, band] of Object.entries(categoryBands)) {
-      const categoryColor = CATEGORY_COLORS[category];
+      // Get color from CATEGORY_COLORS in data.js or use a default color
+      let categoryColor = [128, 128, 128]; // Default gray
+      if (CATEGORY_COLORS && CATEGORY_COLORS[category]) {
+        categoryColor = CATEGORY_COLORS[category];
+      }
+      
       const y = band.centerY * this.height;
-      const height = 0.15 * this.height;
+      const height = bandHeight * this.height;
       
       // Draw band with slightly higher opacity
       this.ctx.fillStyle = `rgba(${categoryColor[0]}, ${categoryColor[1]}, ${categoryColor[2]}, 0.1)`;
@@ -397,9 +431,9 @@ class SpiritMosaic {
       this.ctx.lineTo(this.width, y + height/2);
       this.ctx.stroke();
       
-      // Draw only the category name
+      // Draw the category name with larger, more visible text
       this.ctx.fillStyle = `rgba(${categoryColor[0]}, ${categoryColor[1]}, ${categoryColor[2]}, 0.85)`;
-      this.ctx.font = 'bold 16px Arial';
+      this.ctx.font = 'bold 18px Arial';
       this.ctx.textAlign = 'left';
       this.ctx.textBaseline = 'middle';
       this.ctx.fillText(`${band.label}`, 15, y);
@@ -426,14 +460,9 @@ class SpiritMosaic {
   
   // Calculate monthly statistics
   calculateMonthlyStats() {
+    // Create stats object with counters for each category
     const stats = {
-      categoryCount: {
-        academic: 0,
-        social: 0,
-        professional: 0,
-        cultural: 0,
-        athletic: 0
-      },
+      categoryCount: {},
       totalEvents: 0,
       activeStudents: 0,
       avgEventsPerActive: 0,
@@ -441,6 +470,13 @@ class SpiritMosaic {
       monthlyGrowth: 0,
       topCategory: ''
     };
+    
+    // Initialize categoryCount with all categories from CATEGORIES array
+    if (CATEGORIES) {
+      CATEGORIES.forEach(category => {
+        stats.categoryCount[category] = 0;
+      });
+    }
     
     // Count events by category up to current month
     let lastMonthEvents = 0;
@@ -514,25 +550,26 @@ class SpiritMosaic {
     
     switch (this.colorBy) {
       case 'category': {
-        // Color based on primary category
-        switch (student.primaryCategory) {
-          case 'academic':
-            logoKey = 'mustang_blue'; // SMU blue
-            break;
-          case 'social':
-            logoKey = 'mustang_yellow'; // SMU yellow
-            break;
-          case 'professional':
-            logoKey = 'mustang_teal'; // SMU teal
-            break;
-          case 'cultural':
-            logoKey = 'mustang_gray'; // Gray
-            break;
-          case 'athletic':
-            logoKey = 'mustang_red'; // SMU red
-            break;
-          default:
-            logoKey = 'mustang_blue'; // Default
+        // Color based on primary category - Map to logo colors
+        const category = student.primaryCategory;
+        
+        // Map category to logo color - using updated file names
+        if (category.includes('Academic')) {
+          logoKey = 'mustang_blue'; // SMU blue
+        } else if (category.includes('Social')) {
+          logoKey = 'mustang_yellow'; // SMU yellow
+        } else if (category.includes('Meeting') || category.includes('Professional')) {
+          logoKey = 'mustang_teal'; // SMU teal
+        } else if (category.includes('Cultural')) {
+          logoKey = 'mustang_lightblue'; // Formerly purple, now lightblue
+        } else if (category.includes('Athletic') || category.includes('Sport')) {
+          logoKey = 'mustang_red'; // SMU red  
+        } else if (category.includes('Service') || category.includes('Volunteer')) {
+          logoKey = 'mustang_lightred'; // Formerly green, now lightred
+        } else if (category.includes('Entertainment')) {
+          logoKey = 'mustang_lightteal'; // Formerly orange, now lightteal
+        } else {
+          logoKey = 'mustang_gray'; // Default gray for other/unknown
         }
         break;
       }
@@ -596,23 +633,29 @@ class SpiritMosaic {
     this.ctx.save();
     this.ctx.translate(x, y);
     
-    // Draw the logo if loaded - no shadows
-    if (logoImage && logoImage.complete) {
-      // Calculate logo size to fit within baseSize
-      const logoSize = baseSize * 1.5; // Make logo slightly larger than the standard tile
-      const logoX = -logoSize / 2;
-      const logoY = -logoSize / 2;
-      
-      // Draw the logo
-      this.ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
-      
-      // Add event count indicator
-      this.drawEventCountIndicator(eventCount, baseSize);
-      
-      // Draw a small style indicator in the corner
-      this.drawStyleIndicator(student.style, baseSize);
+    // Draw the logo if loaded and not broken - no shadows
+    if (logoImage && logoImage.complete && logoImage.naturalWidth !== 0) {
+      try {
+        // Calculate logo size to fit within baseSize - smaller than before
+        const logoSize = baseSize * 1.2; // Reduced from 1.5
+        const logoX = -logoSize / 2;
+        const logoY = -logoSize / 2;
+        
+        // Draw the logo (wrapped in try-catch to handle broken images)
+        this.ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
+        
+        // Add event count indicator
+        this.drawEventCountIndicator(eventCount, baseSize);
+        
+        // Draw a small style indicator in the corner
+        this.drawStyleIndicator(student.style, baseSize);
+      } catch (error) {
+        // If drawing fails, use fallback
+        console.log(`Falling back to shape for ${logoKey} due to drawing error`);
+        this.drawEnhancedFallbackTile(baseSize, student);
+      }
     } else {
-      // Fallback to enhanced shape if logo not loaded
+      // Fallback to enhanced shape if logo not loaded or broken
       this.drawEnhancedFallbackTile(baseSize, student);
     }
     
@@ -640,7 +683,12 @@ class SpiritMosaic {
       if (this.zoomLevel > 2.5) {
         const styleName = student.style === 'super-connector' ? 'Super Connector' : 
                          student.style.charAt(0).toUpperCase() + student.style.slice(1);
-        const categoryName = student.primaryCategory.charAt(0).toUpperCase() + student.primaryCategory.slice(1);
+        
+        // Format category name for display (shorten if needed)
+        let categoryName = student.primaryCategory;
+        if (categoryName.includes('/')) {
+          categoryName = categoryName.split('/')[0]; // Take first part of category name
+        }
         
         this.ctx.font = '10px Arial';
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
@@ -902,13 +950,16 @@ class SpiritMosaic {
   
   // Load the logo images
   loadLogoImages() {
-    // Define the logo color variants needed
+    // Define the logo color variants needed with the updated file names
     const logoVariants = [
       { key: 'mustang_red', file: 'mustang_red.png' },
       { key: 'mustang_blue', file: 'mustang_blue.png' },
       { key: 'mustang_teal', file: 'mustang_teal.png' },
       { key: 'mustang_yellow', file: 'mustang_yellow.png' },
-      { key: 'mustang_gray', file: 'mustang_gray.png' }
+      { key: 'mustang_gray', file: 'mustang_gray.png' },
+      { key: 'mustang_lightblue', file: 'mustang_lightblue.png' }, // Previously purple
+      { key: 'mustang_lightred', file: 'mustang_lightred.png' },   // Previously green
+      { key: 'mustang_lightteal', file: 'mustang_lightteal.png' }  // Previously orange
     ];
     
     // Initialize each logo variant
@@ -917,19 +968,18 @@ class SpiritMosaic {
       
       img.onload = () => {
         console.log(`${variant.key} logo loaded successfully`);
+        this.logoImages[variant.key] = img;
         this.render(); // Re-render when image loads
       };
       
       img.onerror = (err) => {
         console.error(`Failed to load ${variant.key} logo:`, err);
-        // Continue with fallback shapes
+        // Mark as null to ensure fallback is used
+        this.logoImages[variant.key] = null;
       };
       
-      // Set the source
-      img.src = variant.file;
-      
-      // Store the image in the logoImages object
-      this.logoImages[variant.key] = img;
+      // Add a timestamp to avoid caching issues
+      img.src = variant.file + '?t=' + new Date().getTime();
     });
     
     console.log("Started loading mustang logo variants");
