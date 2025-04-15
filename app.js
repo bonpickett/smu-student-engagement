@@ -152,11 +152,20 @@ function updateStatsPanel(stats) {
     // Get count from stats data, default to 0 if not present
     const count = stats.categoryCount && stats.categoryCount[category] ? stats.categoryCount[category] : 0;
     
-    // Format category name for display
-    let displayCategory = category;
-    if (category.includes('/')) {
-      // Simplify category names with slashes
-      displayCategory = category.split('/')[0];
+    // Map categories to standardized display names
+    let displayCategory;
+    if (category === 'Academic/Educational/Learning') {
+      displayCategory = 'Academic';
+    } else if (category === 'Meeting/Group Business') {
+      displayCategory = 'Meetings';
+    } else if (category === 'Athletic/Sport') {
+      displayCategory = 'Athletic';
+    } else if (category === 'Career/Professional') {
+      displayCategory = 'Professional';
+    } else if (category === 'Service/Volunteer') {
+      displayCategory = 'Service';
+    } else {
+      displayCategory = category;
     }
     
     // Calculate percentage (avoid division by zero)
@@ -199,11 +208,20 @@ function updateStatsPanel(stats) {
   
   // Add top category if available
   if (stats.topCategory) {
-    // Format category name for display
-    let displayTopCategory = stats.topCategory;
-    if (displayTopCategory.includes('/')) {
-      // Simplify category names with slashes for display
-      displayTopCategory = displayTopCategory.split('/')[0];
+    // Map top category to standardized display name
+    let displayTopCategory;
+    if (stats.topCategory === 'Academic/Educational/Learning') {
+      displayTopCategory = 'Academic';
+    } else if (stats.topCategory === 'Meeting/Group Business') {
+      displayTopCategory = 'Meetings';
+    } else if (stats.topCategory === 'Athletic/Sport') {
+      displayTopCategory = 'Athletic';
+    } else if (stats.topCategory === 'Career/Professional') {
+      displayTopCategory = 'Professional';
+    } else if (stats.topCategory === 'Service/Volunteer') {
+      displayTopCategory = 'Service';
+    } else {
+      displayTopCategory = stats.topCategory;
     }
     
     html += `
@@ -382,11 +400,20 @@ function renderStudentDetails(student) {
   for (const [category, count] of Object.entries(student.categoryDistribution)) {
     if (count === 0) continue;
     
-    // Format category name for display
-    let displayCategory = category;
-    if (category.includes('/')) {
-      // Simplify category names with slashes for display
-      displayCategory = category.split('/')[0];
+    // Map category to standardized display name
+    let displayCategory;
+    if (category === 'Academic/Educational/Learning') {
+      displayCategory = 'Academic';
+    } else if (category === 'Meeting/Group Business') {
+      displayCategory = 'Meetings';
+    } else if (category === 'Athletic/Sport') {
+      displayCategory = 'Athletic';
+    } else if (category === 'Career/Professional') {
+      displayCategory = 'Professional';
+    } else if (category === 'Service/Volunteer') {
+      displayCategory = 'Service';
+    } else {
+      displayCategory = category;
     }
     
     html += `
@@ -411,11 +438,20 @@ function renderStudentDetails(student) {
   
   // Add each event to the list
   for (const event of sortedEvents) {
-    // Format category name for display in event list
-    let displayCategory = event.category;
-    if (displayCategory.includes('/')) {
-      // Simplify category names with slashes for display
-      displayCategory = displayCategory.split('/')[0];
+    // Map category to standardized display name
+    let displayCategory;
+    if (event.category === 'Academic/Educational/Learning') {
+      displayCategory = 'Academic';
+    } else if (event.category === 'Meeting/Group Business') {
+      displayCategory = 'Meetings';
+    } else if (event.category === 'Athletic/Sport') {
+      displayCategory = 'Athletic';
+    } else if (event.category === 'Career/Professional') {
+      displayCategory = 'Professional';
+    } else if (event.category === 'Service/Volunteer') {
+      displayCategory = 'Service';
+    } else {
+      displayCategory = event.category;
     }
     
     html += `

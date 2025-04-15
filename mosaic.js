@@ -459,11 +459,20 @@ class SpiritMosaic {
     const bandHeight = 1.0 / totalCategories;
     
     orderedCategories.forEach((category, index) => {
-      // Create label from category - handle long category names
-      let label = category;
-      // Shorten long category names
-      if (category.includes('/')) {
-        label = category.split('/')[0];
+      // Map categories to standardized display names
+      let label;
+      if (category === 'Academic/Educational/Learning') {
+        label = 'Academic';
+      } else if (category === 'Meeting/Group Business') {
+        label = 'Meetings';
+      } else if (category === 'Athletic/Sport') {
+        label = 'Athletic';
+      } else if (category === 'Career/Professional') {
+        label = 'Professional';
+      } else if (category === 'Service/Volunteer') {
+        label = 'Service';
+      } else {
+        label = category;
       }
       
       categoryBands[category] = {
@@ -705,10 +714,20 @@ class SpiritMosaic {
         const styleName = student.style === 'super-connector' ? 'Super Connector' : 
                          student.style.charAt(0).toUpperCase() + student.style.slice(1);
         
-        // Format category name for display (shorten if needed)
-        let categoryName = student.primaryCategory;
-        if (categoryName.includes('/')) {
-          categoryName = categoryName.split('/')[0]; // Take first part of category name
+        // Map category to standardized display name
+        let categoryName;
+        if (student.primaryCategory === 'Academic/Educational/Learning') {
+          categoryName = 'Academic';
+        } else if (student.primaryCategory === 'Meeting/Group Business') {
+          categoryName = 'Meetings';
+        } else if (student.primaryCategory === 'Athletic/Sport') {
+          categoryName = 'Athletic';
+        } else if (student.primaryCategory === 'Career/Professional') {
+          categoryName = 'Professional';
+        } else if (student.primaryCategory === 'Service/Volunteer') {
+          categoryName = 'Service';
+        } else {
+          categoryName = student.primaryCategory;
         }
         
         this.ctx.font = '10px Arial';

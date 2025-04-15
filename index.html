@@ -3,16 +3,34 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SMU Spirit Evolution</title>
+  <title>SMU Mustang Engagement</title>
   <link rel="stylesheet" href="style.css">
   <!-- Add PapaParse CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  
+  <!-- Override h2 style -->
+  <style>
+    h2 {
+      font-size: 18px; /* Increased from 16px */
+    }
+    
+    footer a {
+      color: var(--smu-blue);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    
+    footer a:hover {
+      color: var(--smu-red);
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>SMU Spirit Evolution</h1>
-      <h2>Class of 2025 Engagement Visualization</h2>
+      <h1>Exploring Mustang Engagement</h1>
+      <h2>Class of 2025</h2>
     </header>
     
     <div class="main-content">
@@ -142,7 +160,9 @@
     </div>
     
     <footer>
-      <p>SMU Spirit Evolution | Class of 2025 Event Attendance Visualization</p>
+      <p>Data provided by <a href="https://smu.campuslabs.com/engage/" target="_blank">SMU360</a>, the campus engagement platform | 
+        <a href="https://www.smu.edu/StudentAffairs" target="_blank">Division of Student Affairs</a>
+      </p>
     </footer>
   </div>
   
