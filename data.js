@@ -1,13 +1,12 @@
 /**
- * data.js - Modified data management for SMU Spirit Mosaic
- * Generates and manages student engagement data with abstract positioning
+ * data.js - Data management for SMU Spirit Mosaic
+ * Processes the real event attendance data from CSV
  */
 
-// Constants for data generation
+// Constants for data generation and mapping
 const CATEGORIES = ['academic', 'social', 'professional', 'cultural', 'athletic'];
 const STYLES = ['sampler', 'specialist', 'super-connector', 'selective'];
-const MONTHS = 8; // 8 months in a school year
-const TOTAL_STUDENTS = 400; // Number of students to generate
+const MONTHS = 12; // 12 months in a year
 
 // Color mapping (for visualization)
 const CATEGORY_COLORS = {
@@ -25,6 +24,47 @@ const STYLE_PATTERNS = {
   selective: { pattern: 'dashed', textureScale: 0.4 }
 };
 
+// Event type to category mapping
+const EVENT_TYPE_MAPPING = {
+  // We'll set these based on actual data types
+  'Academic': 'academic',
+  'Athletics': 'athletic',
+  'Career': 'professional',
+  'Cultural': 'cultural',
+  'Arts': 'cultural',
+  'Diversity': 'cultural',
+  'Community Service': 'social',
+  'Social': 'social',
+  'Leadership': 'professional',
+  'Wellness': 'social',
+  'Lecture': 'academic',
+  'Workshop': 'professional',
+  'Club Meeting': 'social',
+  // Default category
+  'Other': 'social'
+};
+
+// Tags to category mapping for refinement
+const TAG_MAPPING = {
+  'academic': 'academic',
+  'research': 'academic',
+  'lecture': 'academic',
+  'study': 'academic',
+  'career': 'professional',
+  'networking': 'professional',
+  'leadership': 'professional',
+  'social': 'social',
+  'club': 'social',
+  'service': 'social',
+  'culture': 'cultural',
+  'international': 'cultural',
+  'arts': 'cultural',
+  'diversity': 'cultural',
+  'athletic': 'athletic',
+  'sports': 'athletic',
+  'fitness': 'athletic'
+};
+
 // Class to manage student data
 class StudentDataManager {
   constructor() {
@@ -36,15 +76,185 @@ class StudentDataManager {
       style: 'all',
       search: ''
     };
+    
+    // Tracking for raw CSV data
+    this.rawEvents = [];
   }
   
-  // Generate student data
+  // Process the CSV data
+  async processCSVData(callback) {
+    console.log("Processing event attendance data...");
+    
+    try {
+      // Load the CSV data
+      const response = await window.fs.readFile('2025_eventattendance_4.7.25.csv', { encoding: 'utf8' });
+      
+      // Parse the CSV
+      const parseResult = Papa.parse(response, {
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true
+      });
+      
+      this.rawEvents = parseResult.data;
+      console.log(`Loaded ${this.rawEvents.length} event attendance records`);
+      
+      // Process the data into student profiles
+      this.processEventData();
+      
+      // Create abstract positions for visualization
+      this.createAbstractPositions();
+      
+      // Apply initial filters
+      this.applyFilters();
+      
+      if (callback) callback();
+      
+    } catch (error) {
+      console.error("Error processing CSV data:", error);
+      // Fall back to generated data if CSV processing fails
+      this.generateData(callback);
+    }
+  }
+  
+  // Process the event data into student profiles
+  processEventData() {
+    // Reset students array
+    this.students = [];
+    
+    // Group events by student
+    const studentEvents = {};
+    
+    // Process each event record
+    this.rawEvents.forEach(record => {
+      const netId = record['Net ID'];
+      const eventName = record['Event name'];
+      const eventType = record['Event type'] || 'Other';
+      const eventTags = record['Event tags'] || '';
+      let eventDate = record['Event date'];
+      
+      // Skip if missing critical data
+      if (!netId || !eventName || !eventDate) return;
+      
+      // Parse date and extract month
+      let month = 1; // Default to January
+      try {
+        const date = new Date(eventDate);
+        if (!isNaN(date)) {
+          month = date.getMonth() + 1; // 1-12 for Jan-Dec
+        }
+      } catch (e) {
+        console.warn("Couldn't parse date:", eventDate);
+      }
+      
+      // Determine category based on event type and tags
+      let category = this.determineCategory(eventType, eventTags);
+      
+      // Create or update student events
+      if (!studentEvents[netId]) {
+        studentEvents[netId] = [];
+      }
+      
+      // Add this event
+      studentEvents[netId].push({
+        name: eventName,
+        category,
+        month
+      });
+    });
+    
+    // Create student objects
+    for (const [netId, events] of Object.entries(studentEvents)) {
+      // Skip if no events
+      if (events.length === 0) continue;
+      
+      // Calculate category distribution
+      const categoryDistribution = {};
+      CATEGORIES.forEach(cat => { categoryDistribution[cat] = 0; });
+      
+      events.forEach(event => {
+        categoryDistribution[event.category]++;
+      });
+      
+      // Determine primary category
+      const primaryCategory = this.calculatePrimaryCategory(categoryDistribution);
+      
+      // Determine engagement style based on events pattern
+      const style = this.determineEngagementStyle(events, categoryDistribution);
+      
+      // Create the student object
+      const student = {
+        id: netId,
+        style,
+        events,
+        categoryDistribution,
+        connections: [],
+        primaryCategory
+      };
+      
+      this.students.push(student);
+    }
+    
+    console.log(`Created ${this.students.length} student profiles`);
+    
+    // Generate connections between students
+    this.generateConnections();
+  }
+  
+  // Determine category from event type and tags
+  determineCategory(eventType, eventTags) {
+    // First try to map by event type
+    if (EVENT_TYPE_MAPPING[eventType]) {
+      return EVENT_TYPE_MAPPING[eventType];
+    }
+    
+    // If that fails, try using tags
+    if (eventTags) {
+      const tags = eventTags.toLowerCase().split(',').map(tag => tag.trim());
+      
+      for (const tag of tags) {
+        if (TAG_MAPPING[tag]) {
+          return TAG_MAPPING[tag];
+        }
+      }
+    }
+    
+    // Default to social as a fallback
+    return 'social';
+  }
+  
+  // Determine engagement style based on event pattern
+  determineEngagementStyle(events, categoryDistribution) {
+    // Calculate metrics to determine style
+    const categoryCount = Object.values(categoryDistribution).filter(count => count > 0).length;
+    const totalEvents = events.length;
+    
+    // Get the highest category count
+    const maxCategoryCount = Math.max(...Object.values(categoryDistribution));
+    const primaryCategoryRatio = maxCategoryCount / totalEvents;
+    
+    if (categoryCount >= 4 && primaryCategoryRatio < 0.4) {
+      // Super-connector: Spans many categories with no single dominant one
+      return 'super-connector';
+    } else if (primaryCategoryRatio > 0.7) {
+      // Specialist: Highly focused on one category
+      return 'specialist';
+    } else if (totalEvents <= 5 && categoryCount <= 2) {
+      // Selective: Few events, limited categories
+      return 'selective';
+    } else {
+      // Sampler: Tries a variety of things
+      return 'sampler';
+    }
+  }
+  
+  // Generate student data (fallback if CSV processing fails)
   generateData(callback) {
-    console.log("Generating student data...");
+    console.log("Generating fallback student data...");
     this.students = [];
     
     // Generate students with realistic distributions of engagement
-    for (let i = 0; i < TOTAL_STUDENTS; i++) {
+    for (let i = 0; i < 400; i++) {
       const id = `SMU2025${String(i+1).padStart(3, '0')}`;
       const style = STYLES[Math.floor(Math.random() * STYLES.length)];
       const student = this.createStudent(id, style);
@@ -64,7 +274,7 @@ class StudentDataManager {
     return this.students;
   }
   
-  // Create a single student with realistic engagement patterns
+  // Create a single student with realistic engagement patterns (fallback method)
   createStudent(id, style, forcedPrimaryCategory = null) {
     // Determine number of events based on style
     let eventCount;
@@ -97,7 +307,7 @@ class StudentDataManager {
     const events = [];
     
     for (let i = 0; i < eventCount; i++) {
-      // Determine month (1-8)
+      // Determine month (1-12)
       const month = 1 + Math.floor(Math.random() * MONTHS);
       
       // Determine category based on student style
@@ -194,11 +404,12 @@ class StudentDataManager {
     return primaryCategory;
   }
   
-  // Generate a realistic event name
+  // Generate a realistic event name (fallback method)
   generateEventName(category, month) {
     const monthNames = [
       'January', 'February', 'March', 'April', 
-      'May', 'June', 'July', 'August'
+      'May', 'June', 'July', 'August',
+      'September', 'October', 'November', 'December'
     ];
     
     const eventsByCategory = {

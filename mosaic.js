@@ -1,6 +1,6 @@
 /**
- * mosaic.js - Refined visualization logic for SMU Spirit Mosaic
- * Renders the student data as an interactive mosaic with cleaner visuals
+ * mosaic.js - Evolution View for SMU Spirit Mosaic
+ * Focuses solely on the evolution view with manual month control in side panels
  */
 
 class SpiritMosaic {
@@ -31,12 +31,13 @@ class SpiritMosaic {
     this.tileSize = 18; // Base size for tiles
     
     // Display settings
-    this.displayMode = 'mosaic'; // 'mosaic', 'network', 'evolution'
+    this.displayMode = 'evolution'; // Only evolution view
     this.colorBy = 'category'; // 'category', 'style', 'intensity'
     this.selectedStudentId = null;
     this.hoveredStudentId = null;
-    this.animationFrame = 0;
-    this.animationSpeed = 0.05;
+    
+    // Month control
+    this.currentMonth = 1; // Start at month 1
     
     // Interaction state
     this.isDragging = false;
@@ -55,86 +56,26 @@ class SpiritMosaic {
     // Add category bands visualization
     this.showCategoryBands = true;
     
-    // Track connected students for network view
-    this.connectedStudents = new Set();
-    
-    // Listen for student details panel close event to restore all students
-    document.addEventListener('studentDetailsClose', this.resetNetworkView.bind(this));
-    
-    // Update legend to match visualization
-    this.updateLegend();
-  }
-  
-  // Reset network view when student details are closed
-  resetNetworkView() {
-    // Only need to do this if we're in network view
-    if (this.displayMode === 'network' && this.selectedStudentId) {
+    // Listen for student details panel close event
+    document.addEventListener('studentDetailsClose', () => {
       this.selectedStudentId = null;
-      this.connectedStudents.clear();
       this.render();
-    }
+    });
   }
   
-  // Update the legend to match the current visualization
-  updateLegend() {
-    // Find legend elements in the DOM
-    const legendItems = document.querySelectorAll('.legend-item');
-    const legendGroups = document.querySelectorAll('.legend-group');
-    
-    // If the legend exists, update it
-    if (legendGroups.length > 0) {
-      // Update category descriptions if needed
-      const categoryDescriptions = {
-        academic: "Academic engagement (research, lectures, study groups)",
-        social: "Social activities (clubs, events, community service)",
-        professional: "Professional development (career workshops, networking)",
-        cultural: "Cultural participation (arts, music, diversity events)",
-        athletic: "Athletic involvement (sports, fitness, team activities)"
-      };
-      
-      // Find the category legend group and update descriptions
-      legendGroups.forEach(group => {
-        const title = group.querySelector('h4');
-        if (title && title.textContent.includes('Categories')) {
-          const items = group.querySelectorAll('.legend-item');
-          items.forEach(item => {
-            const label = item.querySelector('span');
-            if (label) {
-              const className = Array.from(item.querySelector('.color-sample').classList)
-                .find(cls => CATEGORIES.includes(cls));
-              
-              if (className && categoryDescriptions[className]) {
-                label.textContent = categoryDescriptions[className];
-              }
-            }
-          });
-        }
-        
-        // Update style descriptions if necessary
-        if (title && title.textContent.includes('Styles')) {
-          const styleDescriptions = {
-            sampler: "Sampler: Tries a variety of different activities",
-            specialist: "Specialist: Focuses deeply on one category",
-            'super-connector': "Super Connector: Bridges between multiple categories",
-            selective: "Selective: Participates in few carefully chosen activities"
-          };
-          
-          const items = group.querySelectorAll('.legend-item');
-          items.forEach(item => {
-            const label = item.querySelector('span');
-            if (label) {
-              const text = label.textContent.toLowerCase();
-              for (const [style, description] of Object.entries(styleDescriptions)) {
-                if (text.includes(style.toLowerCase())) {
-                  label.textContent = description;
-                  break;
-                }
-              }
-            }
-          });
-        }
-      });
-    }
+  // Set current month
+  setCurrentMonth(month) {
+    this.currentMonth = month;
+  }
+  
+  // Set color by property
+  setColorBy(colorBy) {
+    this.colorBy = colorBy;
+  }
+  
+  // Get current statistics for the month
+  getCurrentStats() {
+    return this.calculateMonthlyStats();
   }
   
   // Set up event listeners
@@ -293,36 +234,7 @@ class SpiritMosaic {
     const worldX = (canvasX / this.zoomLevel) - this.viewX;
     const worldY = (canvasY / this.zoomLevel) - this.viewY;
     
-    // In network view with selection, only allow interactions with visible students
-    if (this.displayMode === 'network' && this.selectedStudentId && this.connectedStudents.size > 0) {
-      // Check visible students
-      const visibleStudents = [this.selectedStudentId, ...Array.from(this.connectedStudents)];
-      
-      for (const studentId of visibleStudents) {
-        const student = dataManager.getStudentById(studentId);
-        if (!student) continue;
-        
-        const pos = dataManager.getStudentPosition(student.id);
-        const x = pos.x * this.width;
-        const y = pos.y * this.height;
-        
-        // Adjust hit box size based on zoom level
-        const effectiveTileSize = this.getTileSize(student);
-        
-        if (
-          worldX >= x - effectiveTileSize/2 &&
-          worldX <= x + effectiveTileSize/2 &&
-          worldY >= y - effectiveTileSize/2 &&
-          worldY <= y + effectiveTileSize/2
-        ) {
-          return student;
-        }
-      }
-      
-      return null;
-    }
-    
-    // Normal hit testing for other views
+    // Normal hit testing
     for (const student of dataManager.filteredStudents) {
       const pos = dataManager.getStudentPosition(student.id);
       const x = pos.x * this.width;
@@ -346,9 +258,9 @@ class SpiritMosaic {
   
   // Calculate the size of a student tile based on engagement level
   getTileSize(student) {
-    // Base size varies by number of events - more dramatic scale factor for engagement
+    // Base size varies by number of events - Use more consistent sizing
     const eventCount = student.events.length;
-    let size = this.tileSize * (0.7 + (eventCount / 8)); // More pronounced scaling
+    let size = this.tileSize * (0.8 + (eventCount / 20)); // More subtle scaling
     
     // Increase size for selected student
     if (student.id === this.selectedStudentId) {
@@ -362,35 +274,10 @@ class SpiritMosaic {
     return size;
   }
   
-  // Find connected students for a specific student
-  findConnectedStudents(studentId) {
-    const student = dataManager.getStudentById(studentId);
-    if (!student || !student.connections) return new Set();
-    
-    const connectedIds = new Set();
-    
-    // Add each connected student
-    for (const connection of student.connections) {
-      connectedIds.add(connection.studentId);
-    }
-    
-    return connectedIds;
-  }
-  
   // Select a student for detailed view
   selectStudent(studentId) {
     if (this.selectedStudentId !== studentId) {
       this.selectedStudentId = studentId;
-      
-      // If in network view, find connected students
-      if (this.displayMode === 'network') {
-        this.connectedStudents = this.findConnectedStudents(studentId);
-        
-        // Ensure connections are generated
-        if (!dataManager.students[0].connections || dataManager.students[0].connections.length === 0) {
-          dataManager.generateConnections();
-        }
-      }
       
       // Trigger event for details panel update
       const event = new CustomEvent('studentSelected', {
@@ -400,27 +287,6 @@ class SpiritMosaic {
       
       this.render();
     }
-  }
-  
-  // Update the visualization with new data
-  update(displayMode, colorBy, filterCategory) {
-    // If changing from network to another mode, reset connected students
-    if (this.displayMode === 'network' && displayMode !== 'network') {
-      this.connectedStudents.clear();
-    }
-    
-    this.displayMode = displayMode;
-    this.colorBy = colorBy;
-    
-    // Apply filters in data manager
-    dataManager.applyFilters(filterCategory);
-    
-    // If in network view, recalculate connections for selected student
-    if (this.displayMode === 'network' && this.selectedStudentId) {
-      this.connectedStudents = this.findConnectedStudents(this.selectedStudentId);
-    }
-    
-    this.render();
   }
   
   // Reset the view (zoom and position)
@@ -475,27 +341,6 @@ class SpiritMosaic {
     this.render();
   }
   
-  // Start animation loop
-  startAnimation() {
-    this.animationRunning = true;
-    this.animate();
-  }
-  
-  // Animation loop
-  animate() {
-    if (!this.animationRunning) return;
-    
-    this.animationFrame += this.animationSpeed;
-    this.render();
-    
-    requestAnimationFrame(this.animate.bind(this));
-  }
-  
-  // Stop animation
-  stopAnimation() {
-    this.animationRunning = false;
-  }
-  
   // Main render function
   render() {
     if (!this.ctx) return;
@@ -504,7 +349,7 @@ class SpiritMosaic {
     this.ctx.clearRect(0, 0, this.width, this.height);
     
     // Draw category bands in the background with more prominent distinction
-    if (this.showCategoryBands && this.displayMode === 'mosaic') {
+    if (this.showCategoryBands) {
       this.drawCategoryBands();
     }
     
@@ -513,19 +358,8 @@ class SpiritMosaic {
     this.ctx.translate(this.viewX * this.zoomLevel, this.viewY * this.zoomLevel);
     this.ctx.scale(this.zoomLevel, this.zoomLevel);
     
-    // Choose render method based on display mode
-    switch (this.displayMode) {
-      case 'network':
-        this.renderNetworkView();
-        break;
-      case 'evolution':
-        this.renderEvolutionView();
-        break;
-      case 'mosaic':
-      default:
-        this.renderMosaicView();
-        break;
-    }
+    // Render evolution view
+    this.renderEvolutionView();
     
     this.ctx.restore();
   }
@@ -572,201 +406,108 @@ class SpiritMosaic {
     }
   }
   
-  // Render the mosaic view
-  renderMosaicView() {
-    // Draw all student tiles
-    for (const student of dataManager.filteredStudents) {
-      this.drawStudentTile(student);
-    }
-  }
-  
-  // Render the network view
-  renderNetworkView() {
-    // Ensure connections are generated
-    if (!dataManager.students[0].connections || dataManager.students[0].connections.length === 0) {
-      dataManager.generateConnections();
-    }
-    
-    // If a student is selected, only show that student and their connections
-    if (this.selectedStudentId && this.connectedStudents.size > 0) {
-      // Get the selected student
-      const selectedStudent = dataManager.getStudentById(this.selectedStudentId);
-      
-      // Draw connections for the selected student
-      this.renderFocusedConnections();
-      
-      // Draw the selected student
-      if (selectedStudent) {
-        this.drawStudentTile(selectedStudent);
-      }
-      
-      // Draw connected students
-      for (const connectedId of this.connectedStudents) {
-        const connectedStudent = dataManager.getStudentById(connectedId);
-        if (connectedStudent) {
-          this.drawStudentTile(connectedStudent);
-        }
-      }
-    } else {
-      // Standard network view - draw all connections and students
-      this.renderNetworkConnections(0.4); // Moderate connections
-      
-      // Draw all student tiles
-      for (const student of dataManager.filteredStudents) {
-        this.drawStudentTile(student);
-      }
-    }
-  }
-  
-  // Render connections only for the selected student
-  renderFocusedConnections() {
-    if (!this.selectedStudentId) return;
-    
-    const selectedStudent = dataManager.getStudentById(this.selectedStudentId);
-    if (!selectedStudent || !selectedStudent.connections) return;
-    
-    const pos1 = dataManager.getStudentPosition(selectedStudent.id);
-    const x1 = pos1.x * this.width;
-    const y1 = pos1.y * this.height;
-    
-    // Higher opacity for focused connections
-    const opacity = 0.8;
-    
-    for (const connection of selectedStudent.connections) {
-      const connectedStudent = dataManager.getStudentById(connection.studentId);
-      if (!connectedStudent) continue;
-      
-      const pos2 = dataManager.getStudentPosition(connection.studentId);
-      const x2 = pos2.x * this.width;
-      const y2 = pos2.y * this.height;
-      
-      // Set style based on connection type
-      let strokeColor;
-      
-      if (connection.eventKey.includes('academic')) {
-        strokeColor = `rgba(53, 76, 161, ${opacity})`;
-      } else if (connection.eventKey.includes('social')) {
-        strokeColor = `rgba(249, 200, 14, ${opacity})`;
-      } else if (connection.eventKey.includes('professional')) {
-        strokeColor = `rgba(89, 195, 195, ${opacity})`;
-      } else if (connection.eventKey.includes('cultural')) {
-        strokeColor = `rgba(128, 128, 128, ${opacity})`;
-      } else if (connection.eventKey.includes('athletic')) {
-        strokeColor = `rgba(204, 0, 53, ${opacity})`;
-      } else {
-        strokeColor = `rgba(100, 100, 100, ${opacity})`;
-      }
-      
-      // Draw thicker connection lines for focused view
-      this.ctx.beginPath();
-      this.ctx.moveTo(x1, y1);
-      this.ctx.lineTo(x2, y2);
-      this.ctx.strokeStyle = strokeColor;
-      this.ctx.lineWidth = 2; // Thicker lines in focused view
-      this.ctx.stroke();
-      
-      // Draw a small event indicator at the midpoint
-      const midX = (x1 + x2) / 2;
-      const midY = (y1 + y2) / 2;
-      
-      this.ctx.beginPath();
-      this.ctx.arc(midX, midY, 4, 0, Math.PI * 2);
-      this.ctx.fillStyle = strokeColor;
-      this.ctx.fill();
-    }
-  }
-  
-  // Render the evolution view (animations over time)
+  // Render the evolution view 
   renderEvolutionView() {
-    // Determine current time frame (0-8 months)
-    const timeScale = (Math.sin(this.animationFrame) + 1) / 2; // 0 to 1 oscillation
-    const currentMonth = Math.floor(timeScale * 8) + 1; // Months 1-8
-    
     // Draw all student tiles, scaled by events up to current month
     for (const student of dataManager.filteredStudents) {
       // Count events up to current month
-      const eventsUpToNow = student.events.filter(e => e.month <= currentMonth);
-      const monthlyActivityScale = eventsUpToNow.length / Math.max(1, student.events.length);
+      const eventsUpToNow = student.events.filter(e => e.month <= this.currentMonth);
       
-      // Draw with dynamic scaling
-      this.drawStudentTile(student, monthlyActivityScale);
+      // Skip students with no events in the current timeframe
+      if (eventsUpToNow.length === 0) continue;
+      
+      // Use a more consistent sizing approach
+      const baseSize = this.getTileSize(student);
+      
+      // Draw the student with a consistent size
+      this.drawStudentTile(student, baseSize, eventsUpToNow.length);
     }
-    
-    // Draw month indicator
-    this.drawMonthIndicator(currentMonth);
   }
   
-  // Draw connections between related students
-  renderNetworkConnections(opacity) {
-    const drawnConnections = new Set(); // Track connections already drawn
+  // Calculate monthly statistics
+  calculateMonthlyStats() {
+    const stats = {
+      categoryCount: {
+        academic: 0,
+        social: 0,
+        professional: 0,
+        cultural: 0,
+        athletic: 0
+      },
+      totalEvents: 0,
+      activeStudents: 0,
+      avgEventsPerActive: 0,
+      // Additional stats
+      monthlyGrowth: 0,
+      topCategory: ''
+    };
     
-    for (const student of dataManager.filteredStudents) {
-      if (!student.connections) continue;
-      
-      const pos1 = dataManager.getStudentPosition(student.id);
-      const x1 = pos1.x * this.width;
-      const y1 = pos1.y * this.height;
-      
-      for (const connection of student.connections) {
-        // Check if connection is to a filtered student
-        const otherStudent = dataManager.getStudentById(connection.studentId);
-        if (!otherStudent || !dataManager.filteredStudents.includes(otherStudent)) continue;
-        
-        // Create a unique key for this connection pair to avoid duplicates
-        const connKey = [student.id, connection.studentId].sort().join('-');
-        if (drawnConnections.has(connKey)) continue;
-        drawnConnections.add(connKey);
-        
-        const pos2 = dataManager.getStudentPosition(connection.studentId);
-        const x2 = pos2.x * this.width;
-        const y2 = pos2.y * this.height;
-        
-        // Set style based on connection type or strength
-        let strokeColor;
-        let currentOpacity = opacity;
-        
-        // Highlight connections for selected student
-        let lineWidth = 0.8; // Slightly thicker default lines
-        if (this.selectedStudentId && 
-            (student.id === this.selectedStudentId || connection.studentId === this.selectedStudentId)) {
-          lineWidth = 2.5; // More pronounced selected connections
-          currentOpacity = 1.0;
+    // Count events by category up to current month
+    let lastMonthEvents = 0;
+    if (this.currentMonth > 1) {
+      // Calculate events from previous month for growth rate
+      for (const student of dataManager.filteredStudents) {
+        for (const event of student.events) {
+          if (event.month === this.currentMonth - 1) {
+            lastMonthEvents++;
+          }
         }
-        
-        if (connection.eventKey.includes('academic')) {
-          strokeColor = `rgba(53, 76, 161, ${currentOpacity})`;
-        } else if (connection.eventKey.includes('social')) {
-          strokeColor = `rgba(249, 200, 14, ${currentOpacity})`;
-        } else if (connection.eventKey.includes('professional')) {
-          strokeColor = `rgba(89, 195, 195, ${currentOpacity})`;
-        } else if (connection.eventKey.includes('cultural')) {
-          strokeColor = `rgba(128, 128, 128, ${currentOpacity})`;
-        } else if (connection.eventKey.includes('athletic')) {
-          strokeColor = `rgba(204, 0, 53, ${currentOpacity})`;
-        } else {
-          strokeColor = `rgba(100, 100, 100, ${currentOpacity})`;
-        }
-        
-        // Draw the connection
-        this.ctx.beginPath();
-        this.ctx.moveTo(x1, y1);
-        this.ctx.lineTo(x2, y2);
-        this.ctx.strokeStyle = strokeColor;
-        this.ctx.lineWidth = lineWidth;
-        this.ctx.stroke();
       }
     }
+    
+    // Count current month only events (not cumulative)
+    let currentMonthEvents = 0;
+    
+    // Count current month stats
+    for (const student of dataManager.filteredStudents) {
+      let studentActive = false;
+      let studentEventCount = 0;
+      
+      for (const event of student.events) {
+        if (event.month === this.currentMonth) {
+          stats.categoryCount[event.category]++;
+          currentMonthEvents++;
+          studentActive = true;
+          studentEventCount++;
+        }
+      }
+      
+      if (studentActive) {
+        stats.activeStudents++;
+        stats.avgEventsPerActive += studentEventCount;
+      }
+    }
+    
+    stats.totalEvents = currentMonthEvents;
+    
+    // Calculate growth rate (month over month)
+    if (lastMonthEvents > 0) {
+      stats.monthlyGrowth = ((currentMonthEvents - lastMonthEvents) / lastMonthEvents) * 100;
+    }
+    
+    // Determine top category
+    let maxCount = 0;
+    for (const [category, count] of Object.entries(stats.categoryCount)) {
+      if (count > maxCount) {
+        maxCount = count;
+        stats.topCategory = category;
+      }
+    }
+    
+    // Calculate average events per active student
+    if (stats.activeStudents > 0) {
+      stats.avgEventsPerActive /= stats.activeStudents;
+    }
+    
+    return stats;
   }
   
   // Draw a student tile
-  drawStudentTile(student, scaleModifier = 1.0) {
+  drawStudentTile(student, baseSize, eventCount) {
     // Get student position
     const pos = dataManager.getStudentPosition(student.id);
     const x = pos.x * this.width;
     const y = pos.y * this.height;
-    
-    // Calculate size
-    const baseSize = this.getTileSize(student) * scaleModifier;
     
     // Get color based on current visualization settings
     let logoKey;
@@ -851,19 +592,9 @@ class SpiritMosaic {
       strokeWidth = 2; // More visible hover state
     }
     
-    // Apply animation effects in evolution view
-    let rotation = 0;
-    if (this.displayMode === 'evolution') {
-      rotation = this.animationFrame * 0.1;
-    }
-    
     // Draw the student as a logo
     this.ctx.save();
     this.ctx.translate(x, y);
-    
-    if (rotation !== 0) {
-      this.ctx.rotate(rotation);
-    }
     
     // Draw the logo if loaded - no shadows
     if (logoImage && logoImage.complete) {
@@ -874,6 +605,9 @@ class SpiritMosaic {
       
       // Draw the logo
       this.ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
+      
+      // Add event count indicator
+      this.drawEventCountIndicator(eventCount, baseSize);
       
       // Draw a small style indicator in the corner
       this.drawStyleIndicator(student.style, baseSize);
@@ -922,25 +656,48 @@ class SpiritMosaic {
     this.ctx.restore();
   }
   
+  // Draw event count indicator
+  drawEventCountIndicator(count, size) {
+    // Skip if zero events in this month
+    if (count === 0) return;
+    
+    // Position in bottom right corner
+    const x = size * 0.4;
+    const y = size * 0.4;
+    
+    // Draw circle background
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, size * 0.15, 0, Math.PI * 2);
+    this.ctx.fillStyle = 'rgba(204, 0, 53, 0.85)'; // SMU red
+    this.ctx.fill();
+    
+    // Draw count number
+    this.ctx.font = `bold ${size * 0.2}px Arial`;
+    this.ctx.fillStyle = 'white';
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'middle';
+    this.ctx.fillText(count.toString(), x, y);
+  }
+  
   // Draw a style indicator
   drawStyleIndicator(style, size) {
     const indicatorSize = size * 0.25;
-    const indicatorX = size * 0.4;
-    const indicatorY = size * 0.4;
+    const indicatorX = -size * 0.4;
+    const indicatorY = -size * 0.4;
     
     switch (style) {
       case 'sampler':
         // Circle indicator
         this.ctx.fillStyle = 'rgba(53, 76, 161, 0.9)';
         this.ctx.beginPath();
-        this.ctx.arc(indicatorX, -indicatorY, indicatorSize/2, 0, Math.PI * 2);
+        this.ctx.arc(indicatorX, indicatorY, indicatorSize/2, 0, Math.PI * 2);
         this.ctx.fill();
         break;
         
       case 'specialist':
         // Square indicator
         this.ctx.fillStyle = 'rgba(204, 0, 53, 0.9)';
-        this.ctx.fillRect(indicatorX - indicatorSize/2, -indicatorY - indicatorSize/2, indicatorSize, indicatorSize);
+        this.ctx.fillRect(indicatorX - indicatorSize/2, indicatorY - indicatorSize/2, indicatorSize, indicatorSize);
         break;
         
       case 'super-connector':
@@ -948,9 +705,9 @@ class SpiritMosaic {
         this.ctx.fillStyle = 'rgba(89, 195, 195, 0.9)';
         this.ctx.beginPath();
         // Horizontal line
-        this.ctx.rect(indicatorX - indicatorSize/2, -indicatorY - indicatorSize/6, indicatorSize, indicatorSize/3);
+        this.ctx.rect(indicatorX - indicatorSize/2, indicatorY - indicatorSize/6, indicatorSize, indicatorSize/3);
         // Vertical line
-        this.ctx.rect(indicatorX - indicatorSize/6, -indicatorY - indicatorSize/2, indicatorSize/3, indicatorSize);
+        this.ctx.rect(indicatorX - indicatorSize/6, indicatorY - indicatorSize/2, indicatorSize/3, indicatorSize);
         this.ctx.fill();
         break;
         
@@ -958,10 +715,10 @@ class SpiritMosaic {
         // Diamond indicator
         this.ctx.fillStyle = 'rgba(249, 200, 14, 0.9)';
         this.ctx.beginPath();
-        this.ctx.moveTo(indicatorX, -indicatorY - indicatorSize/2);
-        this.ctx.lineTo(indicatorX + indicatorSize/2, -indicatorY);
-        this.ctx.lineTo(indicatorX, -indicatorY + indicatorSize/2);
-        this.ctx.lineTo(indicatorX - indicatorSize/2, -indicatorY);
+        this.ctx.moveTo(indicatorX, indicatorY - indicatorSize/2);
+        this.ctx.lineTo(indicatorX + indicatorSize/2, indicatorY);
+        this.ctx.lineTo(indicatorX, indicatorY + indicatorSize/2);
+        this.ctx.lineTo(indicatorX - indicatorSize/2, indicatorY);
         this.ctx.closePath();
         this.ctx.fill();
         break;
@@ -1143,42 +900,6 @@ class SpiritMosaic {
     this.ctx.fill();
   }
   
-  drawDottedTile(size, fillColor) {
-    this.ctx.beginPath();
-    this.ctx.arc(0, 0, size/2, 0, Math.PI * 2);
-    this.ctx.fillStyle = fillColor;
-    this.ctx.fill();
-  }
-  
-  drawDashedTile(size, fillColor) {
-    this.ctx.beginPath();
-    
-    // Draw a diamond shape
-    this.ctx.moveTo(0, -size/2);
-    this.ctx.lineTo(size/2, 0);
-    this.ctx.lineTo(0, size/2);
-    this.ctx.lineTo(-size/2, 0);
-    this.ctx.closePath();
-    
-    this.ctx.fillStyle = fillColor;
-    this.ctx.fill();
-  }
-  
-  drawCrossTile(size, fillColor) {
-    const armWidth = size / 3;
-    
-    this.ctx.beginPath();
-    
-    // Horizontal arm
-    this.ctx.rect(-size/2, -armWidth/2, size, armWidth);
-    
-    // Vertical arm
-    this.ctx.rect(-armWidth/2, -size/2, armWidth, size);
-    
-    this.ctx.fillStyle = fillColor;
-    this.ctx.fill();
-  }
-  
   // Load the logo images
   loadLogoImages() {
     // Define the logo color variants needed
@@ -1212,46 +933,5 @@ class SpiritMosaic {
     });
     
     console.log("Started loading mustang logo variants");
-  }
-  
-  // Draw month indicator for evolution view
-  drawMonthIndicator(month) {
-    const monthNames = [
-      'January', 'February', 'March', 'April', 
-      'May', 'June', 'July', 'August'
-    ];
-    
-    // Draw a more prominent month indicator
-    this.ctx.save();
-    this.ctx.resetTransform();
-    
-    // Draw background box
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    const boxWidth = 200;
-    const boxHeight = 40;
-    this.ctx.fillRect(this.width - boxWidth - 20, this.height - boxHeight - 20, boxWidth, boxHeight);
-    
-    // Draw month text
-    this.ctx.font = 'bold 18px Arial';
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    this.ctx.textAlign = 'center';
-    this.ctx.textBaseline = 'middle';
-    this.ctx.fillText(`Month: ${monthNames[month-1]}`, this.width - boxWidth/2 - 20, this.height - boxHeight/2 - 20);
-    
-    // Draw progress bar
-    const barWidth = boxWidth - 40;
-    const barHeight = 5;
-    const barX = this.width - boxWidth - 20 + 20;
-    const barY = this.height - 25;
-    
-    // Background bar
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-    this.ctx.fillRect(barX, barY, barWidth, barHeight);
-    
-    // Progress bar
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    this.ctx.fillRect(barX, barY, barWidth * (month / 8), barHeight);
-    
-    this.ctx.restore();
   }
 }

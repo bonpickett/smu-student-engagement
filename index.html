@@ -3,25 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SMU Spirit Mosaic</title>
+  <title>SMU Spirit Evolution</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>SMU Spirit Mosaic</h1>
+      <h1>SMU Spirit Evolution</h1>
       <h2>Class of 2025 Engagement Visualization</h2>
     </header>
     
     <div class="main-content">
-      <div class="left-panel">
+      <!-- Left panel for filters and legend -->
+      <div class="left-panel side-panel">
         <div class="controls">
-          <div class="filter-group">
+          <div class="filter-group" style="display: none;">
             <label for="display-mode">Display:</label>
             <select id="display-mode">
-              <option value="mosaic">Mosaic View</option>
-              <option value="network">Network View</option>
-              <option value="evolution">Evolution View</option>
+              <option value="evolution" selected>Evolution View</option>
             </select>
           </div>
           
@@ -57,24 +56,33 @@
           <div class="legend-items">
             <div class="legend-group">
               <h4>Categories</h4>
-              <div class="legend-item"><div class="color-sample academic"></div><span>Academic</span></div>
-              <div class="legend-item"><div class="color-sample social"></div><span>Social</span></div>
-              <div class="legend-item"><div class="color-sample professional"></div><span>Professional</span></div>
-              <div class="legend-item"><div class="color-sample cultural"></div><span>Cultural</span></div>
-              <div class="legend-item"><div class="color-sample athletic"></div><span>Athletic</span></div>
+              <div class="legend-item"><div class="color-sample academic"></div><span>Academic: Research, lectures, study groups</span></div>
+              <div class="legend-item"><div class="color-sample social"></div><span>Social: Clubs, events, community service</span></div>
+              <div class="legend-item"><div class="color-sample professional"></div><span>Professional: Career workshops, networking</span></div>
+              <div class="legend-item"><div class="color-sample cultural"></div><span>Cultural: Arts, music, diversity events</span></div>
+              <div class="legend-item"><div class="color-sample athletic"></div><span>Athletic: Sports, fitness, team activities</span></div>
             </div>
             
             <div class="legend-group">
               <h4>Styles</h4>
-              <div class="legend-item"><div class="style-sample sampler"></div><span>Sampler</span></div>
-              <div class="legend-item"><div class="style-sample specialist"></div><span>Specialist</span></div>
-              <div class="legend-item"><div class="style-sample super-connector"></div><span>Super Connector</span></div>
-              <div class="legend-item"><div class="style-sample selective"></div><span>Selective</span></div>
+              <div class="legend-item"><div class="style-sample sampler"></div><span>Sampler: Tries a variety of different activities</span></div>
+              <div class="legend-item"><div class="style-sample specialist"></div><span>Specialist: Focuses deeply on one category</span></div>
+              <div class="legend-item"><div class="style-sample super-connector"></div><span>Super Connector: Bridges between multiple categories</span></div>
+              <div class="legend-item"><div class="style-sample selective"></div><span>Selective: Participates in few carefully chosen activities</span></div>
+            </div>
+            
+            <div class="legend-group">
+              <h4>Engagement Intensity</h4>
+              <div class="legend-item"><div class="color-sample" style="background-color: var(--smu-blue);"></div><span>Low: 1-3 events per semester</span></div>
+              <div class="legend-item"><div class="color-sample" style="background-color: var(--smu-teal);"></div><span>Medium: 4-6 events per semester</span></div>
+              <div class="legend-item"><div class="color-sample" style="background-color: var(--smu-red);"></div><span>High: 7+ events per semester</span></div>
+              <div class="legend-item"><div class="count-indicator-sample"></div><span>Number in red circle: Events attended in current month</span></div>
             </div>
           </div>
         </div>
       </div>
       
+      <!-- Center visualization container -->
       <div class="visualization-container">
         <div class="zoom-controls">
           <button id="zoom-in">+</button>
@@ -96,10 +104,33 @@
           </div>
         </div>
       </div>
+      
+      <!-- Right panel for stats and month slider -->
+      <div class="right-panel side-panel">
+        <!-- Statistics panel -->
+        <div id="stats-panel" class="panel-section">
+          <h3>Statistics</h3>
+          <div class="stats-content">
+            <!-- Will be dynamically populated -->
+          </div>
+        </div>
+        
+        <!-- Month slider -->
+        <div id="month-slider-container" class="panel-section">
+          <h3>Month Control</h3>
+          <div class="month-slider-label">
+            <span>Month: </span><span id="month-value">January</span>
+          </div>
+          <input type="range" min="1" max="12" value="1" id="month-slider" class="month-slider">
+          <div class="month-markers">
+            <!-- Month markers will be added by JavaScript -->
+          </div>
+        </div>
+      </div>
     </div>
     
     <footer>
-      <p>SMU Spirit Mosaic | Engagement Visualization | Click on tiles for student details</p>
+      <p>SMU Spirit Evolution | Class of 2025 Event Attendance Visualization</p>
     </footer>
   </div>
   

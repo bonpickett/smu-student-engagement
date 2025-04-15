@@ -1,10 +1,11 @@
 /**
- * app.js - Application initialization and UI controls for SMU Spirit Mosaic
+ * app.js - Updated for Evolution View with Side Panels
+ * Initializes application and UI controls for SMU Spirit Mosaic
  */
 
 // Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('Initializing SMU Spirit Mosaic application...');
+  console.log('Initializing SMU Spirit Evolution View...');
   
   // Show loading message
   const loadingMessage = document.createElement('div');
@@ -16,53 +17,184 @@ document.addEventListener('DOMContentLoaded', function() {
   loadingMessage.style.fontSize = '20px';
   loadingMessage.style.fontWeight = 'bold';
   loadingMessage.style.color = 'rgba(53, 76, 161, 0.8)';
-  loadingMessage.textContent = 'Loading SMU Spirit Mosaic...';
+  loadingMessage.textContent = 'Loading SMU Spirit Evolution Data...';
   document.getElementById('mosaic-container').appendChild(loadingMessage);
   
-  // Initialize data
-  dataManager.generateData(() => {
-    // Create the mosaic visualization
-    const mosaic = new SpiritMosaic('mosaic-container');
-    
-    // Render initial view
-    mosaic.render();
-    
-    // Start animation
-    mosaic.startAnimation();
-    
-    // Set up UI controls
-    setupUIControls(mosaic);
-    
-    // Set up student details panel
-    setupStudentDetailsPanel();
-    
-    // Remove loading message
-    if (loadingMessage.parentNode) {
-      loadingMessage.parentNode.removeChild(loadingMessage);
+  // Import Papa Parse for CSV handling
+  importPapaParseLibrary()
+    .then(() => {
+      // Process the data from CSV file
+      dataManager.processCSVData(() => {
+        // Create the mosaic visualization
+        const mosaic = new SpiritMosaic('mosaic-container');
+        
+        // Render initial view
+        mosaic.render();
+        
+        // Set up UI controls
+        setupUIControls(mosaic);
+        
+        // Set up student details panel
+        setupStudentDetailsPanel();
+        
+        // Set up month slider
+        setupMonthSlider(mosaic);
+        
+        // Initialize stats panel
+        updateStatsPanel(mosaic.getCurrentStats());
+        
+        // Remove loading message
+        if (loadingMessage.parentNode) {
+          loadingMessage.parentNode.removeChild(loadingMessage);
+        }
+        
+        console.log('Evolution View initialized successfully');
+      });
+    })
+    .catch(error => {
+      console.error("Failed to load Papa Parse:", error);
+      loadingMessage.textContent = 'Error loading data parser. Please refresh.';
+    });
+});
+
+// Import Papa Parse library for CSV parsing
+function importPapaParseLibrary() {
+  return new Promise((resolve, reject) => {
+    if (window.Papa) {
+      resolve();
+      return;
     }
     
-    console.log('Application initialized successfully');
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js';
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
   });
-});
+}
+
+// Set up month slider controls
+function setupMonthSlider(mosaic) {
+  const slider = document.getElementById('month-slider');
+  const monthValue = document.getElementById('month-value');
+  
+  // Add month markers if they don't exist
+  const monthMarkers = document.querySelector('.month-markers');
+  if (monthMarkers.children.length === 0) {
+    const monthAbbr = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    monthAbbr.forEach(month => {
+      const marker = document.createElement('span');
+      marker.textContent = month;
+      monthMarkers.appendChild(marker);
+    });
+  }
+  
+  // Set up event listeners
+  slider.addEventListener('input', function() {
+    const month = parseInt(this.value, 10);
+    const monthNames = [
+      'January', 'February', 'March', 'April', 
+      'May', 'June', 'July', 'August',
+      'September', 'October', 'November', 'December'
+    ];
+    
+    monthValue.textContent = monthNames[month - 1];
+    
+    // Update the visualization
+    mosaic.setCurrentMonth(month);
+    mosaic.render();
+    
+    // Update stats panel
+    updateStatsPanel(mosaic.getCurrentStats());
+  });
+}
+
+// Update the statistics panel with current data
+function updateStatsPanel(stats) {
+  const statsContent = document.querySelector('.stats-content');
+  
+  // Generate HTML for stats panel
+  let html = `
+    <div class="stats-section">
+      <h4>Event Categories</h4>
+  `;
+  
+  // Add category bars
+  for (const [category, count] of Object.entries(stats.categoryCount)) {
+    if (stats.totalEvents === 0) continue;
+    
+    const percent = Math.round((count / stats.totalEvents) * 100);
+    html += `
+      <div class="stats-bar">
+        <div class="stats-bar-label">${category.charAt(0).toUpperCase() + category.slice(1)}</div>
+        <div class="stats-bar-container">
+          <div class="stats-bar-fill ${category}" style="width: ${percent}%"></div>
+        </div>
+        <div class="stats-bar-value">${percent}% (${count})</div>
+      </div>
+    `;
+  }
+  
+  // Add participation stats
+  const participationPercent = dataManager.filteredStudents.length > 0 
+    ? Math.round((stats.activeStudents / dataManager.filteredStudents.length) * 100)
+    : 0;
+  
+  html += `
+    </div>
+    <div class="stats-section">
+      <h4>Participation</h4>
+      <div class="stats-info">
+        <div>Active Students: <span class="stats-value">${stats.activeStudents} of ${dataManager.filteredStudents.length} (${participationPercent}%)</span></div>
+        <div>Avg Events per Student: <span class="stats-value">${stats.avgEventsPerActive.toFixed(1)}</span></div>
+  `;
+  
+  // Add growth rate if available
+  if (stats.monthlyGrowth !== undefined) {
+    const growthClass = stats.monthlyGrowth >= 0 ? 'positive' : 'negative';
+    const growthPrefix = stats.monthlyGrowth >= 0 ? '+' : '';
+    
+    html += `
+        <div>Monthly Growth: <span class="stats-value ${growthClass}">${growthPrefix}${stats.monthlyGrowth.toFixed(1)}%</span></div>
+    `;
+  }
+  
+  // Add top category if available
+  if (stats.topCategory) {
+    html += `
+        <div>Top Category: <span class="stats-value ${stats.topCategory}">${stats.topCategory.charAt(0).toUpperCase() + stats.topCategory.slice(1)}</span></div>
+    `;
+  }
+  
+  html += `
+      </div>
+    </div>
+  `;
+  
+  // Update the panel content
+  statsContent.innerHTML = html;
+}
 
 // Set up UI control handlers
 function setupUIControls(mosaic) {
-  // Display mode selector
-  const displayModeSelect = document.getElementById('display-mode');
-  displayModeSelect.addEventListener('change', function() {
-    mosaic.update(this.value, mosaic.colorBy, document.getElementById('filter-category').value);
-  });
-  
   // Color by selector
   const colorBySelect = document.getElementById('color-by');
   colorBySelect.addEventListener('change', function() {
-    mosaic.update(mosaic.displayMode, this.value, document.getElementById('filter-category').value);
+    mosaic.setColorBy(this.value);
+    mosaic.render();
   });
   
   // Category filter
   const filterCategorySelect = document.getElementById('filter-category');
   filterCategorySelect.addEventListener('change', function() {
-    mosaic.update(mosaic.displayMode, mosaic.colorBy, this.value);
+    // Apply filters in data manager
+    dataManager.applyFilters(this.value);
+    
+    // Update the visualization
+    mosaic.render();
+    
+    // Update stats panel with new data
+    updateStatsPanel(mosaic.getCurrentStats());
   });
   
   // Student search
@@ -80,6 +212,8 @@ function setupUIControls(mosaic) {
       
       if (students.length > 0) {
         mosaic.selectStudent(students[0].id);
+        mosaic.render();
+        updateStatsPanel(mosaic.getCurrentStats());
       } else {
         alert('No students found matching: ' + searchTerm);
       }
@@ -235,9 +369,6 @@ function renderStudentDetails(student) {
   
   html += `
     </ul>
-    
-    <h4>Connections</h4>
-    <p>${student.connections ? student.connections.length : 'No'} connections to other students</p>
   `;
   
   detailsContent.innerHTML = html;

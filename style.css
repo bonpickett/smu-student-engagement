@@ -1,4 +1,4 @@
-/* SMU Spirit Mosaic CSS - Compact Layout */
+/* SMU Spirit Mosaic CSS - Three-panel Layout */
 
 /* SMU Colors */
 :root {
@@ -31,7 +31,7 @@ body {
 }
 
 .container {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 10px;
   height: 100%;
@@ -57,7 +57,7 @@ h2 {
   font-weight: normal;
 }
 
-/* Main layout */
+/* Main layout - Three panel design */
 .main-content {
   display: flex;
   flex: 1;
@@ -65,11 +65,31 @@ h2 {
   min-height: 0; /* Important for flex child to allow shrinking */
 }
 
-.left-panel {
+/* Side panel styles (left and right) */
+.side-panel {
   width: 250px;
   display: flex;
   flex-direction: column;
   gap: 15px;
+  overflow-y: auto;
+}
+
+/* Panel sections */
+.panel-section {
+  background-color: var(--panel-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--panel-shadow);
+  padding: 12px;
+  margin-bottom: 15px;
+}
+
+.panel-section h3 {
+  color: var(--smu-blue);
+  font-size: 16px;
+  margin-bottom: 10px;
+  text-align: center;
+  border-bottom: 1px solid rgba(53, 76, 161, 0.3);
+  padding-bottom: 6px;
 }
 
 /* Controls */
@@ -138,22 +158,6 @@ button:hover {
   box-shadow: var(--panel-shadow);
   padding: 12px;
   flex: 1;
-  overflow-y: auto;
-}
-
-.legend h3 {
-  color: var(--smu-blue);
-  font-size: 16px;
-  margin-bottom: 10px;
-  text-align: center;
-  border-bottom: 1px solid rgba(53, 76, 161, 0.3);
-  padding-bottom: 6px;
-}
-
-.legend h4 {
-  color: var(--smu-red);
-  font-size: 14px;
-  margin-bottom: 5px;
 }
 
 .legend-items {
@@ -166,6 +170,12 @@ button:hover {
   background-color: rgba(255, 255, 255, 0.7);
   padding: 8px;
   border-radius: 6px;
+}
+
+.legend h4 {
+  color: var(--smu-red);
+  font-size: 14px;
+  margin-bottom: 5px;
 }
 
 .legend-item {
@@ -299,12 +309,12 @@ button:hover {
 
 /* Visualization container */
 .visualization-container {
+  flex: 1;
   position: relative;
   background-color: var(--panel-bg);
   border-radius: var(--border-radius);
   box-shadow: var(--panel-shadow);
   overflow: hidden;
-  flex: 1;
 }
 
 #mosaic-container {
@@ -317,6 +327,168 @@ button:hover {
 canvas {
   display: block;
   cursor: move;
+}
+
+/* Month slider styles */
+.month-slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  color: var(--smu-blue);
+  margin-bottom: 5px;
+}
+
+#month-value {
+  color: var(--smu-red);
+}
+
+.month-slider {
+  width: 100%;
+  height: 12px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #f0f0f0;
+  outline: none;
+  border-radius: 10px;
+  margin: 5px 0;
+}
+
+/* Slider thumb styling */
+.month-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--smu-red);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: all 0.15s ease;
+}
+
+.month-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  background: var(--smu-blue);
+}
+
+.month-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--smu-red);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: all 0.15s ease;
+}
+
+.month-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  background: var(--smu-blue);
+}
+
+/* Track styling */
+.month-slider::-webkit-slider-runnable-track {
+  height: 12px;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.month-slider::-moz-range-track {
+  height: 12px;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Month markers */
+.month-markers {
+  position: relative;
+  height: 20px;
+  margin-top: 2px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 5px;
+}
+
+.month-markers span {
+  font-size: 10px;
+  color: #666;
+}
+
+/* Statistics styles */
+.stats-content {
+  font-size: 12px;
+}
+
+.stats-section {
+  margin-bottom: 12px;
+}
+
+.stats-section h4 {
+  color: var(--smu-red);
+  font-size: 13px;
+  margin: 8px 0 5px;
+}
+
+.stats-bar {
+  display: grid;
+  grid-template-columns: 80px 1fr 40px;
+  align-items: center;
+  margin-bottom: 5px;
+  font-size: 11px;
+  gap: 5px;
+}
+
+.stats-bar-label {
+  font-weight: 500;
+}
+
+.stats-bar-container {
+  height: 8px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.stats-bar-fill {
+  height: 100%;
+}
+
+.stats-bar-fill.academic {
+  background-color: var(--smu-blue);
+}
+
+.stats-bar-fill.social {
+  background-color: var(--smu-yellow);
+}
+
+.stats-bar-fill.professional {
+  background-color: var(--smu-teal);
+}
+
+.stats-bar-fill.cultural {
+  background-color: #808080;
+}
+
+.stats-bar-fill.athletic {
+  background-color: var(--smu-red);
+}
+
+.stats-bar-value {
+  font-size: 10px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.stats-info {
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.stats-value {
+  font-weight: bold;
 }
 
 /* Zoom controls */
@@ -378,6 +550,10 @@ canvas {
 .details-header h3 {
   color: var(--smu-blue);
   font-size: 18px;
+  text-align: left;
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
 }
 
 .close-btn {
@@ -559,12 +735,31 @@ footer {
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
   .main-content {
-    flex-direction: column;
+    flex-wrap: wrap;
   }
   
-  .left-panel {
+  .side-panel {
+    width: 49%;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .panel-section, .controls, .legend {
+    width: 100%;
+    max-height: none;
+  }
+  
+  .visualization-container {
+    order: 3;
+    width: 100%;
+    min-height: 500px;
+  }
+}
+
+@media (max-width: 768px) {
+  .side-panel {
     width: 100%;
   }
   
