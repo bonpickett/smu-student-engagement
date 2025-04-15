@@ -1,6 +1,6 @@
 /**
- * mosaic.js - Enhanced visualization logic for SMU Spirit Mosaic
- * Renders the student data as an interactive mosaic with more prominent category distinctions
+ * mosaic.js - Refined visualization logic for SMU Spirit Mosaic
+ * Renders the student data as an interactive mosaic with cleaner visuals
  */
 
 class SpiritMosaic {
@@ -28,7 +28,7 @@ class SpiritMosaic {
     this.viewY = 0;
     this.minZoom = 0.2;
     this.maxZoom = 5.0;
-    this.tileSize = 18; // Increased base size for tiles
+    this.tileSize = 18; // Base size for tiles
     
     // Display settings
     this.displayMode = 'mosaic'; // 'mosaic', 'network', 'evolution'
@@ -301,9 +301,9 @@ class SpiritMosaic {
   
   // Calculate the size of a student tile based on engagement level
   getTileSize(student) {
-    // Base size varies by number of events - more engagement = larger icon
+    // Base size varies by number of events - more dramatic scale factor for engagement
     const eventCount = student.events.length;
-    let size = this.tileSize * (0.8 + (eventCount / 12)); // Scale by events with more pronounced difference
+    let size = this.tileSize * (0.7 + (eventCount / 8)); // More pronounced scaling
     
     // Increase size for selected student
     if (student.id === this.selectedStudentId) {
@@ -453,11 +453,11 @@ class SpiritMosaic {
   // Draw background category bands with more prominent distinction
   drawCategoryBands() {
     const categoryBands = {
-      academic: { centerY: 0.2, label: "Academic", icon: "📚" },
-      professional: { centerY: 0.35, label: "Professional", icon: "💼" },
-      social: { centerY: 0.5, label: "Social", icon: "🤝" },
-      cultural: { centerY: 0.65, label: "Cultural", icon: "🎭" },
-      athletic: { centerY: 0.8, label: "Athletic", icon: "🏆" }
+      academic: { centerY: 0.2, label: "Academic" },
+      professional: { centerY: 0.35, label: "Professional" },
+      social: { centerY: 0.5, label: "Social" },
+      cultural: { centerY: 0.65, label: "Cultural" },
+      athletic: { centerY: 0.8, label: "Athletic" }
     };
     
     // Draw bands as more visible background sections with borders
@@ -483,12 +483,12 @@ class SpiritMosaic {
       this.ctx.lineTo(this.width, y + height/2);
       this.ctx.stroke();
       
-      // Draw more prominent label with icon
+      // Draw more prominent label
       this.ctx.fillStyle = `rgba(${categoryColor[0]}, ${categoryColor[1]}, ${categoryColor[2]}, 0.85)`;
       this.ctx.font = 'bold 16px Arial';
       this.ctx.textAlign = 'left';
       this.ctx.textBaseline = 'middle';
-      this.ctx.fillText(`${band.icon} ${band.label}`, 15, y);
+      this.ctx.fillText(`${band.label}`, 15, y);
       
       // Draw a legend for what the band represents
       this.ctx.font = '12px Arial';
@@ -684,14 +684,6 @@ class SpiritMosaic {
     // Get the logo image
     const logoImage = this.logoImages[logoKey];
     
-    // Add clear visual styling to indicate engagement style
-    const styleIndicator = {
-      'sampler': { shadowColor: 'rgba(53, 76, 161, 0.6)', shadowBlur: 5 },
-      'specialist': { shadowColor: 'rgba(204, 0, 53, 0.6)', shadowBlur: 5 },
-      'super-connector': { shadowColor: 'rgba(89, 195, 195, 0.6)', shadowBlur: 5 },
-      'selective': { shadowColor: 'rgba(249, 200, 14, 0.6)', shadowBlur: 5 }
-    };
-    
     // Highlight selected student
     let strokeColor = 'transparent';
     let strokeWidth = 0;
@@ -718,13 +710,7 @@ class SpiritMosaic {
       this.ctx.rotate(rotation);
     }
     
-    // Apply style-specific visual indicator
-    if (styleIndicator[student.style]) {
-      this.ctx.shadowColor = styleIndicator[student.style].shadowColor;
-      this.ctx.shadowBlur = styleIndicator[student.style].shadowBlur;
-    }
-    
-    // Draw the logo if loaded
+    // Draw the logo if loaded - no shadows
     if (logoImage && logoImage.complete) {
       // Calculate logo size to fit within baseSize
       const logoSize = baseSize * 1.5; // Make logo slightly larger than the standard tile
@@ -734,7 +720,7 @@ class SpiritMosaic {
       // Draw the logo
       this.ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
       
-      // Draw an engagement style indicator
+      // Draw a small style indicator in the corner
       this.drawStyleIndicator(student.style, baseSize);
     } else {
       // Fallback to enhanced shape if logo not loaded
@@ -743,8 +729,6 @@ class SpiritMosaic {
     
     // Add stroke if selected or hovered
     if (strokeWidth > 0) {
-      this.ctx.shadowColor = 'transparent'; // Remove shadow for the stroke
-      this.ctx.shadowBlur = 0;
       this.ctx.strokeStyle = strokeColor;
       this.ctx.lineWidth = strokeWidth;
       this.ctx.strokeRect(-baseSize / 2, -baseSize / 2, baseSize, baseSize);
@@ -753,9 +737,6 @@ class SpiritMosaic {
     // Display student information on hover when zoomed in
     if ((student.id === this.hoveredStudentId || student.id === this.selectedStudentId) 
         && this.zoomLevel > 1.5) { // Show info at lower zoom level for better visibility
-      this.ctx.shadowColor = 'transparent';
-      this.ctx.shadowBlur = 0;
-      
       // Display student ID
       this.ctx.fillStyle = 'white';
       this.ctx.strokeStyle = 'black';
@@ -791,9 +772,6 @@ class SpiritMosaic {
     const indicatorSize = size * 0.25;
     const indicatorX = size * 0.4;
     const indicatorY = size * 0.4;
-    
-    this.ctx.shadowColor = 'transparent';
-    this.ctx.shadowBlur = 0;
     
     switch (style) {
       case 'sampler':
