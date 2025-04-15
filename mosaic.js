@@ -1,6 +1,6 @@
 /**
- * mosaic.js - Core visualization logic for SMU Spirit Mosaic
- * Renders the student data as an interactive mosaic
+ * mosaic.js - Enhanced visualization logic for SMU Spirit Mosaic
+ * Renders the student data as an interactive mosaic with more prominent category distinctions
  */
 
 class SpiritMosaic {
@@ -23,12 +23,12 @@ class SpiritMosaic {
     this.canvas.height = this.height;
     
     // View parameters
-    this.zoomLevel = 0.4; // Start zoomed out to see the pattern
+    this.zoomLevel = 1.0; // Default zoom level
     this.viewX = 0;
     this.viewY = 0;
     this.minZoom = 0.2;
     this.maxZoom = 5.0;
-    this.tileSize = 15; // Smaller tiles to make the pattern more visible
+    this.tileSize = 18; // Increased base size for tiles
     
     // Display settings
     this.displayMode = 'mosaic'; // 'mosaic', 'network', 'evolution'
@@ -46,12 +46,79 @@ class SpiritMosaic {
     // Initialize logo images object
     this.logoImages = {};
     
-    // Load the SVG and logo images
-    this.loadSVGImage();
+    // Load the logo images
     this.loadLogoImages();
     
     // Bind event handlers
     this.bindEvents();
+    
+    // Add category bands visualization
+    this.showCategoryBands = true;
+    
+    // Update legend to match visualization
+    this.updateLegend();
+  }
+  
+  // Update the legend to match the current visualization
+  updateLegend() {
+    // Find legend elements in the DOM
+    const legendItems = document.querySelectorAll('.legend-item');
+    const legendGroups = document.querySelectorAll('.legend-group');
+    
+    // If the legend exists, update it
+    if (legendGroups.length > 0) {
+      // Update category descriptions if needed
+      const categoryDescriptions = {
+        academic: "Academic engagement (research, lectures, study groups)",
+        social: "Social activities (clubs, events, community service)",
+        professional: "Professional development (career workshops, networking)",
+        cultural: "Cultural participation (arts, music, diversity events)",
+        athletic: "Athletic involvement (sports, fitness, team activities)"
+      };
+      
+      // Find the category legend group and update descriptions
+      legendGroups.forEach(group => {
+        const title = group.querySelector('h4');
+        if (title && title.textContent.includes('Categories')) {
+          const items = group.querySelectorAll('.legend-item');
+          items.forEach(item => {
+            const label = item.querySelector('span');
+            if (label) {
+              const className = Array.from(item.querySelector('.color-sample').classList)
+                .find(cls => CATEGORIES.includes(cls));
+              
+              if (className && categoryDescriptions[className]) {
+                label.textContent = categoryDescriptions[className];
+              }
+            }
+          });
+        }
+        
+        // Update style descriptions if necessary
+        if (title && title.textContent.includes('Styles')) {
+          const styleDescriptions = {
+            sampler: "Sampler: Tries a variety of different activities",
+            specialist: "Specialist: Focuses deeply on one category",
+            'super-connector': "Super Connector: Bridges between multiple categories",
+            selective: "Selective: Participates in few carefully chosen activities"
+          };
+          
+          const items = group.querySelectorAll('.legend-item');
+          items.forEach(item => {
+            const label = item.querySelector('span');
+            if (label) {
+              const text = label.textContent.toLowerCase();
+              for (const [style, description] of Object.entries(styleDescriptions)) {
+                if (text.includes(style.toLowerCase())) {
+                  label.textContent = description;
+                  break;
+                }
+              }
+            }
+          });
+        }
+      });
+    }
   }
   
   // Set up event listeners
@@ -232,11 +299,11 @@ class SpiritMosaic {
     return null;
   }
   
-  // Calculate the size of a student tile
+  // Calculate the size of a student tile based on engagement level
   getTileSize(student) {
-    // Base size varies by number of events
+    // Base size varies by number of events - more engagement = larger icon
     const eventCount = student.events.length;
-    let size = this.tileSize * (0.8 + (eventCount / 20)); // Scale by events, but not too much
+    let size = this.tileSize * (0.8 + (eventCount / 12)); // Scale by events with more pronounced difference
     
     // Increase size for selected student
     if (student.id === this.selectedStudentId) {
@@ -356,6 +423,11 @@ class SpiritMosaic {
     // Clear canvas
     this.ctx.clearRect(0, 0, this.width, this.height);
     
+    // Draw category bands in the background with more prominent distinction
+    if (this.showCategoryBands && this.displayMode === 'mosaic') {
+      this.drawCategoryBands();
+    }
+    
     // Apply view transformation
     this.ctx.save();
     this.ctx.translate(this.viewX * this.zoomLevel, this.viewY * this.zoomLevel);
@@ -378,28 +450,58 @@ class SpiritMosaic {
     this.ctx.restore();
   }
   
+  // Draw background category bands with more prominent distinction
+  drawCategoryBands() {
+    const categoryBands = {
+      academic: { centerY: 0.2, label: "Academic", icon: "📚" },
+      professional: { centerY: 0.35, label: "Professional", icon: "💼" },
+      social: { centerY: 0.5, label: "Social", icon: "🤝" },
+      cultural: { centerY: 0.65, label: "Cultural", icon: "🎭" },
+      athletic: { centerY: 0.8, label: "Athletic", icon: "🏆" }
+    };
+    
+    // Draw bands as more visible background sections with borders
+    for (const [category, band] of Object.entries(categoryBands)) {
+      const categoryColor = CATEGORY_COLORS[category];
+      const y = band.centerY * this.height;
+      const height = 0.15 * this.height;
+      
+      // Draw band with slightly higher opacity
+      this.ctx.fillStyle = `rgba(${categoryColor[0]}, ${categoryColor[1]}, ${categoryColor[2]}, 0.1)`;
+      this.ctx.fillRect(0, y - height/2, this.width, height);
+      
+      // Draw subtle border lines to separate bands
+      this.ctx.strokeStyle = `rgba(${categoryColor[0]}, ${categoryColor[1]}, ${categoryColor[2]}, 0.3)`;
+      this.ctx.lineWidth = 1;
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, y - height/2);
+      this.ctx.lineTo(this.width, y - height/2);
+      this.ctx.stroke();
+      
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, y + height/2);
+      this.ctx.lineTo(this.width, y + height/2);
+      this.ctx.stroke();
+      
+      // Draw more prominent label with icon
+      this.ctx.fillStyle = `rgba(${categoryColor[0]}, ${categoryColor[1]}, ${categoryColor[2]}, 0.85)`;
+      this.ctx.font = 'bold 16px Arial';
+      this.ctx.textAlign = 'left';
+      this.ctx.textBaseline = 'middle';
+      this.ctx.fillText(`${band.icon} ${band.label}`, 15, y);
+      
+      // Draw a legend for what the band represents
+      this.ctx.font = '12px Arial';
+      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      this.ctx.fillText(`Students primarily engaged in ${band.label.toLowerCase()} activities`, 160, y);
+    }
+  }
+  
   // Render the mosaic view
   renderMosaicView() {
-    // First pass: Draw connections between related students if they're not too far
-    if (this.zoomLevel < 2.0) {
-      this.renderNetworkConnections(0.15); // Faint connections
-    }
-    
     // Draw all student tiles
-    // First draw non-pattern tiles
     for (const student of dataManager.filteredStudents) {
-      const pos = dataManager.getStudentPosition(student.id);
-      if (!pos.fixed) {
-        this.drawStudentTile(student);
-      }
-    }
-    
-    // Then draw pattern tiles on top to make them more visible
-    for (const student of dataManager.filteredStudents) {
-      const pos = dataManager.getStudentPosition(student.id);
-      if (pos.fixed) {
-        this.drawStudentTile(student);
-      }
+      this.drawStudentTile(student);
     }
   }
   
@@ -411,7 +513,7 @@ class SpiritMosaic {
     }
     
     // Draw all connections
-    this.renderNetworkConnections(0.8); // Strong connections
+    this.renderNetworkConnections(0.4); // Moderate connections
     
     // Draw all student tiles
     for (const student of dataManager.filteredStudents) {
@@ -469,10 +571,10 @@ class SpiritMosaic {
         let currentOpacity = opacity;
         
         // Highlight connections for selected student
-        let lineWidth = 0.5;
+        let lineWidth = 0.8; // Slightly thicker default lines
         if (this.selectedStudentId && 
             (student.id === this.selectedStudentId || connection.studentId === this.selectedStudentId)) {
-          lineWidth = 2;
+          lineWidth = 2.5; // More pronounced selected connections
           currentOpacity = 1.0;
         }
         
@@ -483,7 +585,7 @@ class SpiritMosaic {
         } else if (connection.eventKey.includes('professional')) {
           strokeColor = `rgba(89, 195, 195, ${currentOpacity})`;
         } else if (connection.eventKey.includes('cultural')) {
-          strokeColor = `rgba(180, 100, 180, ${currentOpacity})`;
+          strokeColor = `rgba(128, 128, 128, ${currentOpacity})`;
         } else if (connection.eventKey.includes('athletic')) {
           strokeColor = `rgba(204, 0, 53, ${currentOpacity})`;
         } else {
@@ -514,11 +616,8 @@ class SpiritMosaic {
     // Get color based on current visualization settings
     let logoKey;
     
-    // Special handling for pattern students vs non-pattern students
-    const isPatternStudent = pos.fixed;
-    
     switch (this.colorBy) {
-      case 'category':
+      case 'category': {
         // Color based on primary category
         switch (student.primaryCategory) {
           case 'academic':
@@ -540,8 +639,9 @@ class SpiritMosaic {
             logoKey = 'mustang_blue'; // Default
         }
         break;
+      }
         
-      case 'style':
+      case 'style': {
         // Color by engagement style
         switch (student.style) {
           case 'sampler':
@@ -560,8 +660,9 @@ class SpiritMosaic {
             logoKey = 'mustang_blue';
         }
         break;
+      }
         
-      case 'intensity':
+      case 'intensity': {
         // Color by engagement intensity (number of events)
         const intensity = Math.min(1, student.events.length / 10); // Cap at 10 events
         
@@ -574,6 +675,7 @@ class SpiritMosaic {
             logoKey = 'mustang_red';
         }
         break;
+      }
         
       default:
         logoKey = 'mustang_blue';
@@ -582,16 +684,24 @@ class SpiritMosaic {
     // Get the logo image
     const logoImage = this.logoImages[logoKey];
     
+    // Add clear visual styling to indicate engagement style
+    const styleIndicator = {
+      'sampler': { shadowColor: 'rgba(53, 76, 161, 0.6)', shadowBlur: 5 },
+      'specialist': { shadowColor: 'rgba(204, 0, 53, 0.6)', shadowBlur: 5 },
+      'super-connector': { shadowColor: 'rgba(89, 195, 195, 0.6)', shadowBlur: 5 },
+      'selective': { shadowColor: 'rgba(249, 200, 14, 0.6)', shadowBlur: 5 }
+    };
+    
     // Highlight selected student
     let strokeColor = 'transparent';
     let strokeWidth = 0;
     
     if (student.id === this.selectedStudentId) {
       strokeColor = 'white';
-      strokeWidth = 2;
+      strokeWidth = 3; // Thicker border for selected student
     } else if (student.id === this.hoveredStudentId) {
-      strokeColor = 'rgba(255, 255, 255, 0.5)';
-      strokeWidth = 1;
+      strokeColor = 'rgba(255, 255, 255, 0.8)';
+      strokeWidth = 2; // More visible hover state
     }
     
     // Apply animation effects in evolution view
@@ -608,11 +718,14 @@ class SpiritMosaic {
       this.ctx.rotate(rotation);
     }
     
+    // Apply style-specific visual indicator
+    if (styleIndicator[student.style]) {
+      this.ctx.shadowColor = styleIndicator[student.style].shadowColor;
+      this.ctx.shadowBlur = styleIndicator[student.style].shadowBlur;
+    }
+    
     // Draw the logo if loaded
     if (logoImage && logoImage.complete) {
-      // Set opacity based on pattern/non-pattern
-      this.ctx.globalAlpha = isPatternStudent ? 1.0 : 0.7;
-      
       // Calculate logo size to fit within baseSize
       const logoSize = baseSize * 1.5; // Make logo slightly larger than the standard tile
       const logoX = -logoSize / 2;
@@ -620,38 +733,112 @@ class SpiritMosaic {
       
       // Draw the logo
       this.ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
+      
+      // Draw an engagement style indicator
+      this.drawStyleIndicator(student.style, baseSize);
     } else {
-      // Fallback to basic shape if logo not loaded
-      this.drawFallbackTile(baseSize, student, isPatternStudent);
+      // Fallback to enhanced shape if logo not loaded
+      this.drawEnhancedFallbackTile(baseSize, student);
     }
     
     // Add stroke if selected or hovered
     if (strokeWidth > 0) {
+      this.ctx.shadowColor = 'transparent'; // Remove shadow for the stroke
+      this.ctx.shadowBlur = 0;
       this.ctx.strokeStyle = strokeColor;
       this.ctx.lineWidth = strokeWidth;
       this.ctx.strokeRect(-baseSize / 2, -baseSize / 2, baseSize, baseSize);
     }
     
-    // Display student ID on hover when zoomed in
+    // Display student information on hover when zoomed in
     if ((student.id === this.hoveredStudentId || student.id === this.selectedStudentId) 
-        && this.zoomLevel > 2.0) {
+        && this.zoomLevel > 1.5) { // Show info at lower zoom level for better visibility
+      this.ctx.shadowColor = 'transparent';
+      this.ctx.shadowBlur = 0;
+      
+      // Display student ID
       this.ctx.fillStyle = 'white';
       this.ctx.strokeStyle = 'black';
       this.ctx.lineWidth = 0.5;
-      this.ctx.font = '10px Arial';
+      this.ctx.font = 'bold 11px Arial';
       this.ctx.textAlign = 'center';
       this.ctx.textBaseline = 'top';
       this.ctx.strokeText(student.id, 0, baseSize/2 + 5);
       this.ctx.fillText(student.id, 0, baseSize/2 + 5);
+      
+      // Display style and primary category
+      if (this.zoomLevel > 2.5) {
+        const styleName = student.style === 'super-connector' ? 'Super Connector' : 
+                         student.style.charAt(0).toUpperCase() + student.style.slice(1);
+        const categoryName = student.primaryCategory.charAt(0).toUpperCase() + student.primaryCategory.slice(1);
+        
+        this.ctx.font = '10px Arial';
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        this.ctx.strokeText(`${styleName}`, 0, baseSize/2 + 20);
+        this.ctx.fillText(`${styleName}`, 0, baseSize/2 + 20);
+        
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        this.ctx.strokeText(`${categoryName}`, 0, baseSize/2 + 32);
+        this.ctx.fillText(`${categoryName}`, 0, baseSize/2 + 32);
+      }
     }
     
     this.ctx.restore();
   }
   
-  // Fallback tile drawing if logo images are not loaded
-  drawFallbackTile(size, student, isPatternStudent) {
+  // Draw a style indicator
+  drawStyleIndicator(style, size) {
+    const indicatorSize = size * 0.25;
+    const indicatorX = size * 0.4;
+    const indicatorY = size * 0.4;
+    
+    this.ctx.shadowColor = 'transparent';
+    this.ctx.shadowBlur = 0;
+    
+    switch (style) {
+      case 'sampler':
+        // Circle indicator
+        this.ctx.fillStyle = 'rgba(53, 76, 161, 0.9)';
+        this.ctx.beginPath();
+        this.ctx.arc(indicatorX, -indicatorY, indicatorSize/2, 0, Math.PI * 2);
+        this.ctx.fill();
+        break;
+        
+      case 'specialist':
+        // Square indicator
+        this.ctx.fillStyle = 'rgba(204, 0, 53, 0.9)';
+        this.ctx.fillRect(indicatorX - indicatorSize/2, -indicatorY - indicatorSize/2, indicatorSize, indicatorSize);
+        break;
+        
+      case 'super-connector':
+        // Cross indicator
+        this.ctx.fillStyle = 'rgba(89, 195, 195, 0.9)';
+        this.ctx.beginPath();
+        // Horizontal line
+        this.ctx.rect(indicatorX - indicatorSize/2, -indicatorY - indicatorSize/6, indicatorSize, indicatorSize/3);
+        // Vertical line
+        this.ctx.rect(indicatorX - indicatorSize/6, -indicatorY - indicatorSize/2, indicatorSize/3, indicatorSize);
+        this.ctx.fill();
+        break;
+        
+      case 'selective':
+        // Diamond indicator
+        this.ctx.fillStyle = 'rgba(249, 200, 14, 0.9)';
+        this.ctx.beginPath();
+        this.ctx.moveTo(indicatorX, -indicatorY - indicatorSize/2);
+        this.ctx.lineTo(indicatorX + indicatorSize/2, -indicatorY);
+        this.ctx.lineTo(indicatorX, -indicatorY + indicatorSize/2);
+        this.ctx.lineTo(indicatorX - indicatorSize/2, -indicatorY);
+        this.ctx.closePath();
+        this.ctx.fill();
+        break;
+    }
+  }
+  
+  // Enhanced fallback tile drawing with style-specific shapes
+  drawEnhancedFallbackTile(size, student) {
     let fillColor;
-    const alpha = isPatternStudent ? 1.0 : 0.7;
+    const alpha = 0.9;
     
     // Determine fill color based on the student's properties and visualization settings
     switch (this.colorBy) {
@@ -696,12 +883,167 @@ class SpiritMosaic {
       }
         
       default:
-        fillColor = isPatternStudent ? 'rgba(100, 100, 100, 1.0)' : 'rgba(180, 180, 180, 0.7)';
+        fillColor = 'rgba(100, 100, 100, 0.9)';
     }
     
-    // Draw a rectangle as fallback
+    // Draw a more distinguished shape based on the student's style
+    switch (student.style) {
+      case 'sampler':
+        this.drawEnhancedSamplerTile(size, fillColor);
+        break;
+      case 'specialist':
+        this.drawEnhancedSpecialistTile(size, fillColor);
+        break;
+      case 'super-connector':
+        this.drawEnhancedSuperConnectorTile(size, fillColor);
+        break;
+      case 'selective':
+        this.drawEnhancedSelectiveTile(size, fillColor);
+        break;
+      default:
+        this.drawSolidTile(size, fillColor);
+    }
+  }
+  
+  // Enhanced shape drawing methods with more distinctive styles
+  drawEnhancedSamplerTile(size, fillColor) {
+    // Circle with inner pattern
+    this.ctx.beginPath();
+    this.ctx.arc(0, 0, size/2, 0, Math.PI * 2);
     this.ctx.fillStyle = fillColor;
-    this.ctx.fillRect(-size/2, -size/2, size, size);
+    this.ctx.fill();
+    
+    // Add inner pattern - small dots
+    const innerColor = 'rgba(255, 255, 255, 0.5)';
+    this.ctx.fillStyle = innerColor;
+    
+    // Draw multiple small circles inside
+    for (let i = 0; i < 5; i++) {
+      const angle = (i / 5) * Math.PI * 2;
+      const distance = size * 0.25;
+      const dotX = Math.cos(angle) * distance;
+      const dotY = Math.sin(angle) * distance;
+      
+      this.ctx.beginPath();
+      this.ctx.arc(dotX, dotY, size * 0.08, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+  }
+  
+  drawEnhancedSpecialistTile(size, fillColor) {
+    // Solid square with inner pattern
+    this.ctx.beginPath();
+    this.ctx.rect(-size/2, -size/2, size, size);
+    this.ctx.fillStyle = fillColor;
+    this.ctx.fill();
+    
+    // Add inner target pattern
+    const innerColor = 'rgba(255, 255, 255, 0.5)';
+    this.ctx.strokeStyle = innerColor;
+    this.ctx.lineWidth = size * 0.05;
+    
+    // Draw inner square
+    this.ctx.strokeRect(-size/4, -size/4, size/2, size/2);
+  }
+  
+  drawEnhancedSuperConnectorTile(size, fillColor) {
+    // Cross shape with connections
+    const armWidth = size / 3;
+    
+    this.ctx.beginPath();
+    // Horizontal arm
+    this.ctx.rect(-size/2, -armWidth/2, size, armWidth);
+    // Vertical arm
+    this.ctx.rect(-armWidth/2, -size/2, armWidth, size);
+    
+    this.ctx.fillStyle = fillColor;
+    this.ctx.fill();
+    
+    // Add connection nodes at endpoints
+    const nodeColor = 'rgba(255, 255, 255, 0.7)';
+    this.ctx.fillStyle = nodeColor;
+    
+    const nodePositions = [
+      [-size/2, 0], // Left
+      [size/2, 0],  // Right
+      [0, -size/2], // Top
+      [0, size/2]   // Bottom
+    ];
+    
+    for (const [nx, ny] of nodePositions) {
+      this.ctx.beginPath();
+      this.ctx.arc(nx, ny, size * 0.12, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+  }
+  
+  drawEnhancedSelectiveTile(size, fillColor) {
+    // Diamond with selected sections
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, -size/2);
+    this.ctx.lineTo(size/2, 0);
+    this.ctx.lineTo(0, size/2);
+    this.ctx.lineTo(-size/2, 0);
+    this.ctx.closePath();
+    
+    this.ctx.fillStyle = fillColor;
+    this.ctx.fill();
+    
+    // Add highlight to represent selective focus
+    const highlightColor = 'rgba(255, 255, 255, 0.6)';
+    this.ctx.fillStyle = highlightColor;
+    
+    // Highlight one quarter of the diamond
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, 0);
+    this.ctx.lineTo(0, -size/2);
+    this.ctx.lineTo(size/2, 0);
+    this.ctx.closePath();
+    this.ctx.fill();
+  }
+  
+  // Simple shape drawing methods
+  drawSolidTile(size, fillColor) {
+    this.ctx.beginPath();
+    this.ctx.rect(-size/2, -size/2, size, size);
+    this.ctx.fillStyle = fillColor;
+    this.ctx.fill();
+  }
+  
+  drawDottedTile(size, fillColor) {
+    this.ctx.beginPath();
+    this.ctx.arc(0, 0, size/2, 0, Math.PI * 2);
+    this.ctx.fillStyle = fillColor;
+    this.ctx.fill();
+  }
+  
+  drawDashedTile(size, fillColor) {
+    this.ctx.beginPath();
+    
+    // Draw a diamond shape
+    this.ctx.moveTo(0, -size/2);
+    this.ctx.lineTo(size/2, 0);
+    this.ctx.lineTo(0, size/2);
+    this.ctx.lineTo(-size/2, 0);
+    this.ctx.closePath();
+    
+    this.ctx.fillStyle = fillColor;
+    this.ctx.fill();
+  }
+  
+  drawCrossTile(size, fillColor) {
+    const armWidth = size / 3;
+    
+    this.ctx.beginPath();
+    
+    // Horizontal arm
+    this.ctx.rect(-size/2, -armWidth/2, size, armWidth);
+    
+    // Vertical arm
+    this.ctx.rect(-armWidth/2, -size/2, armWidth, size);
+    
+    this.ctx.fillStyle = fillColor;
+    this.ctx.fill();
   }
   
   // Load the logo images
@@ -746,30 +1088,37 @@ class SpiritMosaic {
       'May', 'June', 'July', 'August'
     ];
     
-    // Draw text in screen coordinates, not world coordinates
+    // Draw a more prominent month indicator
     this.ctx.save();
     this.ctx.resetTransform();
     
-    this.ctx.font = '16px Arial';
+    // Draw background box
     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    this.ctx.textAlign = 'right';
-    this.ctx.textBaseline = 'bottom';
-    this.ctx.fillText(`Month: ${monthNames[month-1]}`, this.width - 20, this.height - 20);
+    const boxWidth = 200;
+    const boxHeight = 40;
+    this.ctx.fillRect(this.width - boxWidth - 20, this.height - boxHeight - 20, boxWidth, boxHeight);
+    
+    // Draw month text
+    this.ctx.font = 'bold 18px Arial';
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'middle';
+    this.ctx.fillText(`Month: ${monthNames[month-1]}`, this.width - boxWidth/2 - 20, this.height - boxHeight/2 - 20);
+    
+    // Draw progress bar
+    const barWidth = boxWidth - 40;
+    const barHeight = 5;
+    const barX = this.width - boxWidth - 20 + 20;
+    const barY = this.height - 25;
+    
+    // Background bar
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    this.ctx.fillRect(barX, barY, barWidth, barHeight);
+    
+    // Progress bar
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    this.ctx.fillRect(barX, barY, barWidth * (month / 8), barHeight);
     
     this.ctx.restore();
-  }
-  
-  // Load the SVG image for reference
-  loadSVGImage() {
-    const img = new Image();
-    img.onload = () => {
-      console.log("SVG image loaded successfully");
-      this.svgImage = img;
-      this.render();
-    };
-    img.onerror = (err) => {
-      console.error("Failed to load SVG image:", err);
-    };
-    img.src = 'mustang.svg';
   }
 }

@@ -355,6 +355,7 @@ canvas {
 }
 
 /* Legend */
+/* Enhanced legend styling */
 .legend {
   background-color: var(--panel-bg);
   border-radius: var(--border-radius);
@@ -366,13 +367,34 @@ canvas {
 .legend h3 {
   color: var(--smu-blue);
   margin-bottom: 15px;
-  font-size: 18px;
+  font-size: 22px;
+  text-align: center;
+  border-bottom: 1px solid rgba(53, 76, 161, 0.3);
+  padding-bottom: 10px;
 }
 
 .legend h4 {
   color: var(--smu-red);
-  font-size: 16px;
-  margin-bottom: 10px;
+  font-size: 18px;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+}
+
+.legend h4::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background-color: var(--smu-red);
+  margin-right: 8px;
+}
+
+.legend-description {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 12px;
+  font-style: italic;
 }
 
 .legend-items {
@@ -382,55 +404,148 @@ canvas {
 }
 
 .legend-group {
-  min-width: 200px;
+  min-width: 300px;
+  flex: 1;
+  background-color: rgba(255, 255, 255, 0.7);
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  padding: 5px;
+  transition: background-color 0.2s;
+  border-radius: 4px;
 }
 
-.color-sample, .style-sample {
-  width: 20px;
-  height: 20px;
-  margin-right: 10px;
+.legend-item:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.color-sample, .style-sample, .feature-sample {
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
   border-radius: 3px;
+  flex-shrink: 0;
 }
 
+.legend-item span {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Enhanced category color samples */
 .color-sample.academic {
   background-color: var(--smu-blue);
+  position: relative;
+}
+
+.color-sample.academic::after {
+  content: "📚";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
 }
 
 .color-sample.social {
   background-color: var(--smu-yellow);
+  position: relative;
+}
+
+.color-sample.social::after {
+  content: "🤝";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
 }
 
 .color-sample.professional {
   background-color: var(--smu-teal);
+  position: relative;
+}
+
+.color-sample.professional::after {
+  content: "💼";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
 }
 
 .color-sample.cultural {
-  background-color: rgb(180, 100, 180);
+  background-color: #808080; /* Gray */
+  position: relative;
+}
+
+.color-sample.cultural::after {
+  content: "🎭";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
 }
 
 .color-sample.athletic {
   background-color: var(--smu-red);
+  position: relative;
 }
 
+.color-sample.athletic::after {
+  content: "🏆";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+}
+
+/* Enhanced style samples */
 .style-sample.sampler {
-  background-color: rgba(53, 76, 161, 0.1);
-  border: 1px dashed var(--smu-blue);
+  background-color: rgba(53, 76, 161, 0.2);
+  border-radius: 50%;
+  position: relative;
+}
+
+.style-sample.sampler::before {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: rgba(53, 76, 161, 0.8);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .style-sample.specialist {
-  background-color: rgba(204, 0, 53, 0.1);
-  border: 1px solid var(--smu-red);
+  background-color: rgba(204, 0, 53, 0.2);
+  position: relative;
+}
+
+.style-sample.specialist::before {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(204, 0, 53, 0.8);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .style-sample.super-connector {
-  background-color: rgba(89, 195, 195, 0.1);
-  border: 1px solid var(--smu-teal);
+  background-color: rgba(89, 195, 195, 0.2);
   position: relative;
 }
 
@@ -438,26 +553,95 @@ canvas {
 .style-sample.super-connector::after {
   content: '';
   position: absolute;
-  background-color: var(--smu-teal);
+  background-color: rgba(89, 195, 195, 0.8);
 }
 
 .style-sample.super-connector::before {
-  width: 12px;
-  height: 1px;
-  top: 9px;
-  left: 4px;
+  width: 16px;
+  height: 4px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .style-sample.super-connector::after {
-  width: 1px;
-  height: 12px;
-  top: 4px;
-  left: 9px;
+  width: 4px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .style-sample.selective {
-  background-color: rgba(249, 200, 14, 0.1);
-  border: 1px dotted var(--smu-yellow);
+  background-color: rgba(249, 200, 14, 0.2);
+  position: relative;
+}
+
+.style-sample.selective::before {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background-color: rgba(249, 200, 14, 0.8);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* Feature samples */
+.feature-sample.size {
+  background: radial-gradient(circle, rgba(53, 76, 161, 0.8) 0%, rgba(53, 76, 161, 0.2) 100%);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+}
+
+.feature-sample.connection {
+  position: relative;
+  background: transparent;
+}
+
+.feature-sample.connection::before {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 2px;
+  background-color: rgba(53, 76, 161, 0.8);
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.feature-sample.highlight {
+  background-color: transparent;
+  border: 3px solid white;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+.feature-sample.evolution {
+  background-color: transparent;
+  overflow: hidden;
+  position: relative;
+}
+
+.feature-sample.evolution::before {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: conic-gradient(
+    var(--smu-blue) 0%, 
+    var(--smu-teal) 33%, 
+    var(--smu-yellow) 66%, 
+    var(--smu-red) 100%
+  );
+  border-radius: 50%;
+  animation: rotate 3s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* Footer */
