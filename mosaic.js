@@ -28,7 +28,7 @@ class SpiritMosaic {
     this.viewY = 0;
     this.minZoom = 0.2;
     this.maxZoom = 5.0;
-    this.tileSize = 12; // Reduced base size for tiles (was 18)
+    this.tileSize = 18; // Increased base size for tiles even more
     
     // Display settings
     this.displayMode = 'evolution'; // Only evolution view
@@ -258,20 +258,20 @@ class SpiritMosaic {
   
   // Calculate the size of a student tile based on engagement level
   getTileSize(student) {
-    // Base size - much smaller than before
-    const baseSize = this.tileSize * 0.6; // Reduce base size
+    // Larger base size 
+    const baseSize = this.tileSize * 1.0; // Increased to full size
     
-    // Slightly scale based on events, but with much less variation
+    // More noticeable scaling based on events
     const eventCount = student.events.length;
-    let size = baseSize * (0.8 + (eventCount / 40)); // Much more subtle scaling
+    let size = baseSize * (0.9 + (eventCount / 100)); // More variation between students
     
-    // Increase size for selected student
+    // For selected students, make them larger
     if (student.id === this.selectedStudentId) {
-      size *= 1.3; // Less increase
-    } 
-    // Slightly increase size for hovered student
-    else if (student.id === this.hoveredStudentId) {
-      size *= 1.1; // Less increase
+      size *= 1.5; // Make selected students larger
+    }
+    // For hover effect only - selection is handled differently now
+    else if (this.hoveredStudentId === student.id) {
+      size *= 1.25; // Enhanced hover effect
     }
     
     return size;
@@ -280,7 +280,49 @@ class SpiritMosaic {
   // Select a student for detailed view
   selectStudent(studentId) {
     if (this.selectedStudentId !== studentId) {
+      // Store previous selection for animation
+      const previousSelectedId = this.selectedStudentId;
+      
+      // Update selection
       this.selectedStudentId = studentId;
+      
+      // If we have a selected student, animate it to the center
+      if (studentId) {
+        // Get position of the newly selected student
+        const studentPos = dataManager.getStudentPosition(studentId);
+        const startX = studentPos.x * this.width;
+        const startY = studentPos.y * this.height;
+        
+        // Calculate center of the visible area in world coordinates
+        const centerX = this.width / 2 / this.zoomLevel - this.viewX;
+        const centerY = this.height / 2 / this.zoomLevel - this.viewY;
+        
+        // Save the original position for reference
+        this._selectedStudentOriginalPos = { x: startX, y: startY };
+        
+        // Don't move the view - instead we'll animate the mustang to the center
+        // in the draw function by interpolating its position
+        
+        // Calculate animation start time
+        this._animationStartTime = Date.now();
+        this._animationDuration = 500; // 500ms for animation
+        
+        // Store animation parameters
+        this._animation = {
+          startX: startX,
+          startY: startY,
+          endX: centerX,
+          endY: centerY,
+          startTime: Date.now(),
+          duration: 500 // 500ms
+        };
+        
+        // Request animation frame to start animation
+        requestAnimationFrame(() => this.animateSelection());
+      } else {
+        // No student selected, clear animation data
+        this._animation = null;
+      }
       
       // Trigger event for details panel update
       const event = new CustomEvent('studentSelected', {
@@ -289,6 +331,33 @@ class SpiritMosaic {
       document.dispatchEvent(event);
       
       this.render();
+    }
+  }
+  
+  // Animate the selected student moving to center
+  animateSelection() {
+    if (!this._animation) return;
+    
+    const now = Date.now();
+    const elapsed = now - this._animation.startTime;
+    const progress = Math.min(1, elapsed / this._animation.duration);
+    
+    // Ease-in-out function for smooth animation
+    const easeInOut = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    const easedProgress = easeInOut(progress);
+    
+    // Store current animation position
+    this._currentAnimationPosition = {
+      x: this._animation.startX + (this._animation.endX - this._animation.startX) * easedProgress,
+      y: this._animation.startY + (this._animation.endY - this._animation.startY) * easedProgress
+    };
+    
+    // Render the current frame
+    this.render();
+    
+    // Continue animation if not complete
+    if (progress < 1) {
+      requestAnimationFrame(() => this.animateSelection());
     }
   }
   
@@ -442,7 +511,11 @@ class SpiritMosaic {
   
   // Render the evolution view 
   renderEvolutionView() {
-    // Draw all student tiles, scaled by events up to current month
+    // Track selected student to draw last (on top)
+    let selectedStudent = null;
+    let selectedEvents = null;
+    
+    // Draw all student tiles 
     for (const student of dataManager.filteredStudents) {
       // Count events up to current month
       const eventsUpToNow = student.events.filter(e => e.month <= this.currentMonth);
@@ -450,100 +523,58 @@ class SpiritMosaic {
       // Skip students with no events in the current timeframe
       if (eventsUpToNow.length === 0) continue;
       
-      // Use a more consistent sizing approach
+      // Use a consistent sizing approach
       const baseSize = this.getTileSize(student);
       
-      // Draw the student with a consistent size
-      this.drawStudentTile(student, baseSize, eventsUpToNow.length);
-    }
-  }
-  
-  // Calculate monthly statistics
-  calculateMonthlyStats() {
-    // Create stats object with counters for each category
-    const stats = {
-      categoryCount: {},
-      totalEvents: 0,
-      activeStudents: 0,
-      avgEventsPerActive: 0,
-      // Additional stats
-      monthlyGrowth: 0,
-      topCategory: ''
-    };
-    
-    // Initialize categoryCount with all categories from CATEGORIES array
-    if (CATEGORIES) {
-      CATEGORIES.forEach(category => {
-        stats.categoryCount[category] = 0;
-      });
+      // Draw the student
+      this.drawStudentTile(student, baseSize, eventsUpToNow.length, student.id === this.selectedStudentId);
     }
     
-    // Count events by category up to current month
-    let lastMonthEvents = 0;
-    if (this.currentMonth > 1) {
-      // Calculate events from previous month for growth rate
-      for (const student of dataManager.filteredStudents) {
-        for (const event of student.events) {
-          if (event.month === this.currentMonth - 1) {
-            lastMonthEvents++;
-          }
-        }
+    // If a student is selected and we're not animating, add the glow effect
+    if (this.selectedStudentId && !this._animation) {
+      const selectedStudent = dataManager.getStudentById(this.selectedStudentId);
+      if (selectedStudent) {
+        // Calculate center of the viewport
+        const centerX = this.width / 2 / this.zoomLevel - this.viewX;
+        const centerY = this.height / 2 / this.zoomLevel - this.viewY;
+        
+        // Draw glow effect at the center
+        this.ctx.save();
+        this.ctx.translate(centerX, centerY);
+        
+        // Add glow effect
+        this.ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+        this.ctx.shadowBlur = 15;
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, this.tileSize * 0.8, 0, Math.PI * 2);
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        this.ctx.fill();
+        
+        this.ctx.restore();
       }
     }
-    
-    // Count current month only events (not cumulative)
-    let currentMonthEvents = 0;
-    
-    // Count current month stats
-    for (const student of dataManager.filteredStudents) {
-      let studentActive = false;
-      let studentEventCount = 0;
-      
-      for (const event of student.events) {
-        if (event.month === this.currentMonth) {
-          stats.categoryCount[event.category]++;
-          currentMonthEvents++;
-          studentActive = true;
-          studentEventCount++;
-        }
-      }
-      
-      if (studentActive) {
-        stats.activeStudents++;
-        stats.avgEventsPerActive += studentEventCount;
-      }
-    }
-    
-    stats.totalEvents = currentMonthEvents;
-    
-    // Calculate growth rate (month over month)
-    if (lastMonthEvents > 0) {
-      stats.monthlyGrowth = ((currentMonthEvents - lastMonthEvents) / lastMonthEvents) * 100;
-    }
-    
-    // Determine top category
-    let maxCount = 0;
-    for (const [category, count] of Object.entries(stats.categoryCount)) {
-      if (count > maxCount) {
-        maxCount = count;
-        stats.topCategory = category;
-      }
-    }
-    
-    // Calculate average events per active student
-    if (stats.activeStudents > 0) {
-      stats.avgEventsPerActive /= stats.activeStudents;
-    }
-    
-    return stats;
   }
   
   // Draw a student tile
-  drawStudentTile(student, baseSize, eventCount) {
-    // Get student position
-    const pos = dataManager.getStudentPosition(student.id);
-    const x = pos.x * this.width;
-    const y = pos.y * this.height;
+  drawStudentTile(student, baseSize, eventCount, isSelectedAndCentered = false) {
+    let x, y;
+    
+    // If selected and we're in the middle of animation, use animated position
+    if (student.id === this.selectedStudentId && this._currentAnimationPosition) {
+      x = this._currentAnimationPosition.x;
+      y = this._currentAnimationPosition.y;
+    }
+    // If centered selected student, position is at origin (already centered by translation)
+    else if (isSelectedAndCentered) {
+      x = 0;
+      y = 0;
+    }
+    // Otherwise use normal position
+    else {
+      const pos = dataManager.getStudentPosition(student.id);
+      x = pos.x * this.width;
+      y = pos.y * this.height;
+    }
     
     // Get color based on current visualization settings
     let logoKey;
@@ -617,18 +648,6 @@ class SpiritMosaic {
     // Get the logo image
     const logoImage = this.logoImages[logoKey];
     
-    // Highlight selected student
-    let strokeColor = 'transparent';
-    let strokeWidth = 0;
-    
-    if (student.id === this.selectedStudentId) {
-      strokeColor = 'white';
-      strokeWidth = 3; // Thicker border for selected student
-    } else if (student.id === this.hoveredStudentId) {
-      strokeColor = 'rgba(255, 255, 255, 0.8)';
-      strokeWidth = 2; // More visible hover state
-    }
-    
     // Draw the student as a logo
     this.ctx.save();
     this.ctx.translate(x, y);
@@ -636,8 +655,8 @@ class SpiritMosaic {
     // Draw the logo if loaded and not broken - no shadows
     if (logoImage && logoImage.complete && logoImage.naturalWidth !== 0) {
       try {
-        // Calculate logo size to fit within baseSize - smaller than before
-        const logoSize = baseSize * 1.2; // Reduced from 1.5
+        // Calculate logo size to fit within baseSize - larger than before
+        const logoSize = baseSize * 1.5; // Increased for more prominent display
         const logoX = -logoSize / 2;
         const logoY = -logoSize / 2;
         
@@ -659,15 +678,17 @@ class SpiritMosaic {
       this.drawEnhancedFallbackTile(baseSize, student);
     }
     
-    // Add stroke if selected or hovered
-    if (strokeWidth > 0) {
-      this.ctx.strokeStyle = strokeColor;
-      this.ctx.lineWidth = strokeWidth;
-      this.ctx.strokeRect(-baseSize / 2, -baseSize / 2, baseSize, baseSize);
+    // No stroke needed anymore - we'll use centering and scaling instead
+    // Just add subtle highlight for hover
+    if (student.id === this.hoveredStudentId) {
+      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+      this.ctx.beginPath();
+      this.ctx.arc(0, 0, baseSize * 0.8, 0, Math.PI * 2);
+      this.ctx.fill();
     }
     
     // Display student information on hover when zoomed in
-    if ((student.id === this.hoveredStudentId || student.id === this.selectedStudentId) 
+    if ((student.id === this.hoveredStudentId || isSelectedAndCentered) 
         && this.zoomLevel > 1.5) { // Show info at lower zoom level for better visibility
       // Display student ID
       this.ctx.fillStyle = 'white';
@@ -983,5 +1004,85 @@ class SpiritMosaic {
     });
     
     console.log("Started loading mustang logo variants");
+  }
+  
+  // Calculate monthly statistics
+  calculateMonthlyStats() {
+    // Create stats object with counters for each category
+    const stats = {
+      categoryCount: {},
+      totalEvents: 0,
+      activeStudents: 0,
+      avgEventsPerActive: 0,
+      // Additional stats
+      monthlyGrowth: 0,
+      topCategory: ''
+    };
+    
+    // Initialize categoryCount with all categories from CATEGORIES array
+    if (CATEGORIES) {
+      CATEGORIES.forEach(category => {
+        stats.categoryCount[category] = 0;
+      });
+    }
+    
+    // Count events by category up to current month
+    let lastMonthEvents = 0;
+    if (this.currentMonth > 1) {
+      // Calculate events from previous month for growth rate
+      for (const student of dataManager.filteredStudents) {
+        for (const event of student.events) {
+          if (event.month === this.currentMonth - 1) {
+            lastMonthEvents++;
+          }
+        }
+      }
+    }
+    
+    // Count current month only events (not cumulative)
+    let currentMonthEvents = 0;
+    
+    // Count current month stats
+    for (const student of dataManager.filteredStudents) {
+      let studentActive = false;
+      let studentEventCount = 0;
+      
+      for (const event of student.events) {
+        if (event.month === this.currentMonth) {
+          stats.categoryCount[event.category]++;
+          currentMonthEvents++;
+          studentActive = true;
+          studentEventCount++;
+        }
+      }
+      
+      if (studentActive) {
+        stats.activeStudents++;
+        stats.avgEventsPerActive += studentEventCount;
+      }
+    }
+    
+    stats.totalEvents = currentMonthEvents;
+    
+    // Calculate growth rate (month over month)
+    if (lastMonthEvents > 0) {
+      stats.monthlyGrowth = ((currentMonthEvents - lastMonthEvents) / lastMonthEvents) * 100;
+    }
+    
+    // Determine top category
+    let maxCount = 0;
+    for (const [category, count] of Object.entries(stats.categoryCount)) {
+      if (count > maxCount) {
+        maxCount = count;
+        stats.topCategory = category;
+      }
+    }
+    
+    // Calculate average events per active student
+    if (stats.activeStudents > 0) {
+      stats.avgEventsPerActive /= stats.activeStudents;
+    }
+    
+    return stats;
   }
 }

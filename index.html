@@ -16,9 +16,10 @@
     </header>
     
     <div class="main-content">
-      <!-- Left panel for filters and legend -->
-      <div class="left-panel side-panel">
-        <div class="controls">
+      <!-- Left panel with fixed controls and scrollable legend -->
+      <div class="left-panel">
+        <!-- Fixed controls section -->
+        <div id="fixed-controls">
           <div class="filter-group" style="display: none;">
             <label for="display-mode">Display:</label>
             <select id="display-mode">
@@ -57,7 +58,8 @@
           </div>
         </div>
         
-        <div class="legend">
+        <!-- Scrollable legend section -->
+        <div id="scrollable-legend">
           <h3>Legend</h3>
           <div class="legend-items">
             <div class="legend-group">

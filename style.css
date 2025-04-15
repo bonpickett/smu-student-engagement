@@ -68,23 +68,46 @@ h2 {
   min-height: 0; /* Important for flex child to allow shrinking */
 }
 
-/* Side panel styles (left and right) */
-.side-panel {
+/* New Left panel layout with fixed controls */
+.left-panel {
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Fixed controls - these will stay at the top */
+#fixed-controls {
+  background-color: var(--panel-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--panel-shadow);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Scrollable legend - this will scroll independently */
+#scrollable-legend {
+  background-color: var(--panel-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--panel-shadow);
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+  max-height: calc(100vh - 250px);
+}
+
+/* Right panel styles */
+.right-panel {
   width: 250px;
   display: flex;
   flex-direction: column;
   gap: 15px;
-}
-
-/* Left panel should be scrollable */
-.left-panel {
-  overflow-y: auto;
-  max-height: calc(100vh - 150px);
-}
-
-/* Right panel should not scroll */
-.right-panel {
-  overflow-y: visible;
 }
 
 /* Panel sections */
@@ -105,17 +128,17 @@ h2 {
   padding-bottom: 6px;
 }
 
-/* Controls */
-.controls {
-  background-color: var(--panel-bg);
-  border-radius: var(--border-radius);
-  box-shadow: var(--panel-shadow);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* Heading for scrollable legend */
+#scrollable-legend h3 {
+  color: var(--smu-blue);
+  font-size: 16px;
+  margin-bottom: 10px;
+  text-align: center;
+  border-bottom: 1px solid rgba(53, 76, 161, 0.3);
+  padding-bottom: 6px;
 }
 
+/* Form control styles */
 .filter-group, .search-group {
   display: flex;
   flex-direction: column;
@@ -164,15 +187,7 @@ button:hover {
   flex: 1;
 }
 
-/* Compact Legend */
-.legend {
-  background-color: var(--panel-bg);
-  border-radius: var(--border-radius);
-  box-shadow: var(--panel-shadow);
-  padding: 12px;
-  flex: 1;
-}
-
+/* Legend Items */
 .legend-items {
   display: flex;
   flex-direction: column;
@@ -185,7 +200,7 @@ button:hover {
   border-radius: 6px;
 }
 
-.legend h4 {
+.legend-group h4 {
   color: var(--smu-red);
   font-size: 14px;
   margin-bottom: 5px;
@@ -215,7 +230,7 @@ button:hover {
   font-size: 13px;
 }
 
-/* Category color samples - Updated for new categories */
+/* Category color samples */
 .color-sample.Academic\/Educational\/Learning, .color-sample[class*="Academic"] {
   background-color: var(--smu-blue);
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -829,15 +844,8 @@ footer {
     flex-wrap: wrap;
   }
   
-  .side-panel {
+  .left-panel, .right-panel {
     width: 49%;
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-  
-  .panel-section, .controls, .legend {
-    width: 100%;
-    max-height: none;
   }
   
   .visualization-container {
@@ -848,7 +856,7 @@ footer {
 }
 
 @media (max-width: 768px) {
-  .side-panel {
+  .left-panel, .right-panel {
     width: 100%;
   }
   

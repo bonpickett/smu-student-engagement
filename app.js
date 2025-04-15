@@ -123,10 +123,23 @@ function setupMonthSlider(mosaic) {
   }
 }
 
-// Update the statistics panel with current data
+// Update the statistics panel with current data - FIXED TO ALWAYS SHOW ALL CATEGORIES
 function updateStatsPanel(stats) {
   const statsContent = document.querySelector('.stats-content');
   if (!statsContent) return;
+  
+  // Define all categories that should always be displayed
+  const allCategories = [
+    'Academic/Educational/Learning',
+    'Social',
+    'Meeting/Group Business',
+    'Cultural',
+    'Athletic/Sport',
+    'Career/Professional',
+    'Service/Volunteer',
+    'Entertainment',
+    'Other'
+  ];
   
   // Generate HTML for stats panel
   let html = `
@@ -134,10 +147,10 @@ function updateStatsPanel(stats) {
       <h4>Event Categories</h4>
   `;
   
-  // Add category bars
-  for (const [category, count] of Object.entries(stats.categoryCount)) {
-    if (stats.totalEvents === 0) continue;
-    if (count === 0) continue; // Skip empty categories
+  // Always display ALL categories defined in the list above, regardless of current month data
+  for (const category of allCategories) {
+    // Get count from stats data, default to 0 if not present
+    const count = stats.categoryCount && stats.categoryCount[category] ? stats.categoryCount[category] : 0;
     
     // Format category name for display
     let displayCategory = category;
@@ -146,7 +159,9 @@ function updateStatsPanel(stats) {
       displayCategory = category.split('/')[0];
     }
     
-    const percent = Math.round((count / stats.totalEvents) * 100);
+    // Calculate percentage (avoid division by zero)
+    const percent = stats.totalEvents === 0 ? 0 : Math.round((count / stats.totalEvents) * 100);
+    
     html += `
       <div class="stats-bar">
         <div class="stats-bar-label">${displayCategory}</div>
@@ -187,7 +202,7 @@ function updateStatsPanel(stats) {
     // Format category name for display
     let displayTopCategory = stats.topCategory;
     if (displayTopCategory.includes('/')) {
-      // Simplify category names with slashes
+      // Simplify category names with slashes for display
       displayTopCategory = displayTopCategory.split('/')[0];
     }
     
