@@ -23,12 +23,12 @@ class SpiritMosaic {
     this.canvas.height = this.height;
     
     // View parameters
-    this.zoomLevel = 1.0;
+    this.zoomLevel = 0.4; // Start zoomed out to see the pattern
     this.viewX = 0;
     this.viewY = 0;
     this.minZoom = 0.2;
     this.maxZoom = 5.0;
-    this.tileSize = 20; // Base size of student tiles
+    this.tileSize = 15; // Smaller tiles to make the pattern more visible
     
     // Display settings
     this.displayMode = 'mosaic'; // 'mosaic', 'network', 'evolution'
@@ -42,6 +42,13 @@ class SpiritMosaic {
     this.isDragging = false;
     this.lastMouseX = 0;
     this.lastMouseY = 0;
+    
+    // Initialize logo images object
+    this.logoImages = {};
+    
+    // Load the SVG and logo images
+    this.loadSVGImage();
+    this.loadLogoImages();
     
     // Bind event handlers
     this.bindEvents();
@@ -378,14 +385,21 @@ class SpiritMosaic {
       this.renderNetworkConnections(0.15); // Faint connections
     }
     
-    // Draw SMU pattern outline at very zoomed-out level
-    if (this.zoomLevel < 0.5) {
-      this.drawSMUPattern();
+    // Draw all student tiles
+    // First draw non-pattern tiles
+    for (const student of dataManager.filteredStudents) {
+      const pos = dataManager.getStudentPosition(student.id);
+      if (!pos.fixed) {
+        this.drawStudentTile(student);
+      }
     }
     
-    // Draw all student tiles
+    // Then draw pattern tiles on top to make them more visible
     for (const student of dataManager.filteredStudents) {
-      this.drawStudentTile(student);
+      const pos = dataManager.getStudentPosition(student.id);
+      if (pos.fixed) {
+        this.drawStudentTile(student);
+      }
     }
   }
   
@@ -452,26 +466,28 @@ class SpiritMosaic {
         
         // Set style based on connection type or strength
         let strokeColor;
-        if (connection.eventKey.includes('academic')) {
-          strokeColor = `rgba(53, 76, 161, ${opacity})`;
-        } else if (connection.eventKey.includes('social')) {
-          strokeColor = `rgba(249, 200, 14, ${opacity})`;
-        } else if (connection.eventKey.includes('professional')) {
-          strokeColor = `rgba(89, 195, 195, ${opacity})`;
-        } else if (connection.eventKey.includes('cultural')) {
-          strokeColor = `rgba(180, 100, 180, ${opacity})`;
-        } else if (connection.eventKey.includes('athletic')) {
-          strokeColor = `rgba(204, 0, 53, ${opacity})`;
-        } else {
-          strokeColor = `rgba(100, 100, 100, ${opacity})`;
-        }
+        let currentOpacity = opacity;
         
         // Highlight connections for selected student
         let lineWidth = 0.5;
         if (this.selectedStudentId && 
             (student.id === this.selectedStudentId || connection.studentId === this.selectedStudentId)) {
           lineWidth = 2;
-          opacity = 1.0;
+          currentOpacity = 1.0;
+        }
+        
+        if (connection.eventKey.includes('academic')) {
+          strokeColor = `rgba(53, 76, 161, ${currentOpacity})`;
+        } else if (connection.eventKey.includes('social')) {
+          strokeColor = `rgba(249, 200, 14, ${currentOpacity})`;
+        } else if (connection.eventKey.includes('professional')) {
+          strokeColor = `rgba(89, 195, 195, ${currentOpacity})`;
+        } else if (connection.eventKey.includes('cultural')) {
+          strokeColor = `rgba(180, 100, 180, ${currentOpacity})`;
+        } else if (connection.eventKey.includes('athletic')) {
+          strokeColor = `rgba(204, 0, 53, ${currentOpacity})`;
+        } else {
+          strokeColor = `rgba(100, 100, 100, ${currentOpacity})`;
         }
         
         // Draw the connection
@@ -496,47 +512,75 @@ class SpiritMosaic {
     const baseSize = this.getTileSize(student) * scaleModifier;
     
     // Get color based on current visualization settings
-    let fillColor;
+    let logoKey;
+    
+    // Special handling for pattern students vs non-pattern students
+    const isPatternStudent = pos.fixed;
     
     switch (this.colorBy) {
       case 'category':
-        // Color by primary category
-        const categoryColors = CATEGORY_COLORS[student.primaryCategory] || [100, 100, 100];
-        fillColor = `rgb(${categoryColors[0]}, ${categoryColors[1]}, ${categoryColors[2]})`;
+        // Color based on primary category
+        switch (student.primaryCategory) {
+          case 'academic':
+            logoKey = 'mustang_blue'; // SMU blue
+            break;
+          case 'social':
+            logoKey = 'mustang_yellow'; // SMU yellow
+            break;
+          case 'professional':
+            logoKey = 'mustang_teal'; // SMU teal
+            break;
+          case 'cultural':
+            logoKey = 'mustang_gray'; // Gray
+            break;
+          case 'athletic':
+            logoKey = 'mustang_red'; // SMU red
+            break;
+          default:
+            logoKey = 'mustang_blue'; // Default
+        }
         break;
         
       case 'style':
         // Color by engagement style
         switch (student.style) {
           case 'sampler':
-            fillColor = 'rgb(53, 76, 161)'; // SMU blue
+            logoKey = 'mustang_blue'; // SMU blue
             break;
           case 'specialist':
-            fillColor = 'rgb(204, 0, 53)';  // SMU red
+            logoKey = 'mustang_red';  // SMU red
             break;
           case 'super-connector':
-            fillColor = 'rgb(89, 195, 195)'; // SMU teal
+            logoKey = 'mustang_teal'; // SMU teal
             break;
           case 'selective':
-            fillColor = 'rgb(249, 200, 14)'; // SMU yellow
+            logoKey = 'mustang_yellow'; // SMU yellow
             break;
           default:
-            fillColor = 'rgb(100, 100, 100)';
+            logoKey = 'mustang_blue';
         }
         break;
         
       case 'intensity':
         // Color by engagement intensity (number of events)
         const intensity = Math.min(1, student.events.length / 10); // Cap at 10 events
-        fillColor = `rgb(${Math.round(53 + 151 * intensity)}, ${Math.round(76 + 120 * intensity)}, ${Math.round(161 * (1 - intensity) + 53 * intensity)})`;
+        
+        // Assign color based on intensity
+        if (intensity < 0.33) {
+            logoKey = 'mustang_blue';
+        } else if (intensity < 0.66) {
+            logoKey = 'mustang_teal';
+        } else {
+            logoKey = 'mustang_red';
+        }
         break;
         
       default:
-        fillColor = 'rgb(100, 100, 100)';
+        logoKey = 'mustang_blue';
     }
     
-    // Apply pattern based on engagement style
-    const style = STYLE_PATTERNS[student.style] || { pattern: 'solid', textureScale: 0.3 };
+    // Get the logo image
+    const logoImage = this.logoImages[logoKey];
     
     // Highlight selected student
     let strokeColor = 'transparent';
@@ -556,7 +600,7 @@ class SpiritMosaic {
       rotation = this.animationFrame * 0.1;
     }
     
-    // Draw the student tile with appropriate pattern
+    // Draw the student as a logo
     this.ctx.save();
     this.ctx.translate(x, y);
     
@@ -564,21 +608,28 @@ class SpiritMosaic {
       this.ctx.rotate(rotation);
     }
     
-    // Draw tile shape based on pattern
-    switch (style.pattern) {
-      case 'dotted':
-        this.drawDottedTile(baseSize, fillColor, strokeColor, strokeWidth);
-        break;
-      case 'dashed':
-        this.drawDashedTile(baseSize, fillColor, strokeColor, strokeWidth);
-        break;
-      case 'cross':
-        this.drawCrossTile(baseSize, fillColor, strokeColor, strokeWidth);
-        break;
-      case 'solid':
-      default:
-        this.drawSolidTile(baseSize, fillColor, strokeColor, strokeWidth);
-        break;
+    // Draw the logo if loaded
+    if (logoImage && logoImage.complete) {
+      // Set opacity based on pattern/non-pattern
+      this.ctx.globalAlpha = isPatternStudent ? 1.0 : 0.7;
+      
+      // Calculate logo size to fit within baseSize
+      const logoSize = baseSize * 1.5; // Make logo slightly larger than the standard tile
+      const logoX = -logoSize / 2;
+      const logoY = -logoSize / 2;
+      
+      // Draw the logo
+      this.ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
+    } else {
+      // Fallback to basic shape if logo not loaded
+      this.drawFallbackTile(baseSize, student, isPatternStudent);
+    }
+    
+    // Add stroke if selected or hovered
+    if (strokeWidth > 0) {
+      this.ctx.strokeStyle = strokeColor;
+      this.ctx.lineWidth = strokeWidth;
+      this.ctx.strokeRect(-baseSize / 2, -baseSize / 2, baseSize, baseSize);
     }
     
     // Display student ID on hover when zoomed in
@@ -597,78 +648,95 @@ class SpiritMosaic {
     this.ctx.restore();
   }
   
-  // Draw a solid tile
-  drawSolidTile(size, fillColor, strokeColor, strokeWidth) {
-    this.ctx.beginPath();
-    this.ctx.rect(-size/2, -size/2, size, size);
-    this.ctx.fillStyle = fillColor;
-    this.ctx.fill();
+  // Fallback tile drawing if logo images are not loaded
+  drawFallbackTile(size, student, isPatternStudent) {
+    let fillColor;
+    const alpha = isPatternStudent ? 1.0 : 0.7;
     
-    if (strokeWidth > 0) {
-      this.ctx.strokeStyle = strokeColor;
-      this.ctx.lineWidth = strokeWidth;
-      this.ctx.stroke();
+    // Determine fill color based on the student's properties and visualization settings
+    switch (this.colorBy) {
+      case 'category': {
+        // Use category colors from CATEGORY_COLORS in data.js
+        const categoryColors = CATEGORY_COLORS[student.primaryCategory] || [100, 100, 100];
+        fillColor = `rgba(${categoryColors[0]}, ${categoryColors[1]}, ${categoryColors[2]}, ${alpha})`;
+        break;
+      }
+        
+      case 'style': {
+        // Color by engagement style
+        let r, g, b;
+        switch (student.style) {
+          case 'sampler':
+            r = 53; g = 76; b = 161; // SMU blue
+            break;
+          case 'specialist':
+            r = 204; g = 0; b = 53;  // SMU red
+            break;
+          case 'super-connector':
+            r = 89; g = 195; b = 195; // SMU teal
+            break;
+          case 'selective':
+            r = 249; g = 200; b = 14; // SMU yellow
+            break;
+          default:
+            r = 100; g = 100; b = 100;
+        }
+        fillColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        break;
+      }
+        
+      case 'intensity': {
+        // Color by engagement intensity (number of events)
+        const intensity = Math.min(1, student.events.length / 10); // Cap at 10 events
+        const r = Math.round(53 + 151 * intensity);
+        const g = Math.round(76 + 120 * intensity);
+        const b = Math.round(161 * (1 - intensity) + 53 * intensity);
+        fillColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        break;
+      }
+        
+      default:
+        fillColor = isPatternStudent ? 'rgba(100, 100, 100, 1.0)' : 'rgba(180, 180, 180, 0.7)';
     }
+    
+    // Draw a rectangle as fallback
+    this.ctx.fillStyle = fillColor;
+    this.ctx.fillRect(-size/2, -size/2, size, size);
   }
   
-  // Draw a dotted pattern tile
-  drawDottedTile(size, fillColor, strokeColor, strokeWidth) {
-    // Draw base shape
-    this.ctx.beginPath();
-    this.ctx.arc(0, 0, size/2, 0, Math.PI * 2);
-    this.ctx.fillStyle = fillColor;
-    this.ctx.fill();
+  // Load the logo images
+  loadLogoImages() {
+    // Define the logo color variants needed
+    const logoVariants = [
+      { key: 'mustang_red', file: 'mustang_red.png' },
+      { key: 'mustang_blue', file: 'mustang_blue.png' },
+      { key: 'mustang_teal', file: 'mustang_teal.png' },
+      { key: 'mustang_yellow', file: 'mustang_yellow.png' },
+      { key: 'mustang_gray', file: 'mustang_gray.png' }
+    ];
     
-    if (strokeWidth > 0) {
-      this.ctx.strokeStyle = strokeColor;
-      this.ctx.lineWidth = strokeWidth;
-      this.ctx.stroke();
-    }
-  }
-  
-  // Draw a dashed pattern tile
-  drawDashedTile(size, fillColor, strokeColor, strokeWidth) {
-    // Draw base with dashed pattern
-    this.ctx.beginPath();
+    // Initialize each logo variant
+    logoVariants.forEach(variant => {
+      const img = new Image();
+      
+      img.onload = () => {
+        console.log(`${variant.key} logo loaded successfully`);
+        this.render(); // Re-render when image loads
+      };
+      
+      img.onerror = (err) => {
+        console.error(`Failed to load ${variant.key} logo:`, err);
+        // Continue with fallback shapes
+      };
+      
+      // Set the source
+      img.src = variant.file;
+      
+      // Store the image in the logoImages object
+      this.logoImages[variant.key] = img;
+    });
     
-    // Draw a diamond shape
-    this.ctx.moveTo(0, -size/2);
-    this.ctx.lineTo(size/2, 0);
-    this.ctx.lineTo(0, size/2);
-    this.ctx.lineTo(-size/2, 0);
-    this.ctx.closePath();
-    
-    this.ctx.fillStyle = fillColor;
-    this.ctx.fill();
-    
-    if (strokeWidth > 0) {
-      this.ctx.strokeStyle = strokeColor;
-      this.ctx.lineWidth = strokeWidth;
-      this.ctx.stroke();
-    }
-  }
-  
-  // Draw a cross pattern tile
-  drawCrossTile(size, fillColor, strokeColor, strokeWidth) {
-    // Draw plus sign shape
-    const armWidth = size / 3;
-    
-    this.ctx.beginPath();
-    
-    // Horizontal arm
-    this.ctx.rect(-size/2, -armWidth/2, size, armWidth);
-    
-    // Vertical arm
-    this.ctx.rect(-armWidth/2, -size/2, armWidth, size);
-    
-    this.ctx.fillStyle = fillColor;
-    this.ctx.fill();
-    
-    if (strokeWidth > 0) {
-      this.ctx.strokeStyle = strokeColor;
-      this.ctx.lineWidth = strokeWidth;
-      this.ctx.stroke();
-    }
+    console.log("Started loading mustang logo variants");
   }
   
   // Draw month indicator for evolution view
@@ -691,26 +759,17 @@ class SpiritMosaic {
     this.ctx.restore();
   }
   
-  // Draw the SMU pattern outline for zoomed-out view
-  drawSMUPattern() {
-    this.ctx.beginPath();
-    
-    // Draw a path through the pattern points
-    let firstPoint = true;
-    for (const pos of SMU_PATTERN) {
-      const x = pos[0] * this.width;
-      const y = pos[1] * this.height;
-      
-      if (firstPoint) {
-        this.ctx.moveTo(x, y);
-        firstPoint = false;
-      } else {
-        this.ctx.lineTo(x, y);
-      }
-    }
-    
-    this.ctx.strokeStyle = 'rgba(204, 0, 53, 0.3)'; // Faint SMU red
-    this.ctx.lineWidth = 5;
-    this.ctx.stroke();
+  // Load the SVG image for reference
+  loadSVGImage() {
+    const img = new Image();
+    img.onload = () => {
+      console.log("SVG image loaded successfully");
+      this.svgImage = img;
+      this.render();
+    };
+    img.onerror = (err) => {
+      console.error("Failed to load SVG image:", err);
+    };
+    img.src = 'mustang.svg';
   }
 }

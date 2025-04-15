@@ -6,25 +6,43 @@
 document.addEventListener('DOMContentLoaded', function() {
   console.log('Initializing SMU Spirit Mosaic application...');
   
+  // Show loading message
+  const loadingMessage = document.createElement('div');
+  loadingMessage.id = 'loading-message';
+  loadingMessage.style.position = 'absolute';
+  loadingMessage.style.top = '50%';
+  loadingMessage.style.left = '50%';
+  loadingMessage.style.transform = 'translate(-50%, -50%)';
+  loadingMessage.style.fontSize = '20px';
+  loadingMessage.style.fontWeight = 'bold';
+  loadingMessage.style.color = 'rgba(53, 76, 161, 0.8)';
+  loadingMessage.textContent = 'Loading SMU Spirit Mosaic...';
+  document.getElementById('mosaic-container').appendChild(loadingMessage);
+  
   // Initialize data
-  dataManager.generateData();
-  
-  // Create the mosaic visualization
-  const mosaic = new SpiritMosaic('mosaic-container');
-  
-  // Render initial view
-  mosaic.render();
-  
-  // Start animation
-  mosaic.startAnimation();
-  
-  // Set up UI controls
-  setupUIControls(mosaic);
-  
-  // Set up student details panel
-  setupStudentDetailsPanel();
-  
-  console.log('Application initialized successfully');
+  dataManager.generateData(() => {
+    // Create the mosaic visualization
+    const mosaic = new SpiritMosaic('mosaic-container');
+    
+    // Render initial view
+    mosaic.render();
+    
+    // Start animation
+    mosaic.startAnimation();
+    
+    // Set up UI controls
+    setupUIControls(mosaic);
+    
+    // Set up student details panel
+    setupStudentDetailsPanel();
+    
+    // Remove loading message
+    if (loadingMessage.parentNode) {
+      loadingMessage.parentNode.removeChild(loadingMessage);
+    }
+    
+    console.log('Application initialized successfully');
+  });
 });
 
 // Set up UI control handlers
