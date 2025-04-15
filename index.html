@@ -13,133 +13,86 @@
       <h2>Class of 2025 Engagement Visualization</h2>
     </header>
     
-    <div class="controls">
-      <div class="filter-group">
-        <label for="display-mode">Display Mode:</label>
-        <select id="display-mode">
-          <option value="mosaic">Mosaic View</option>
-          <option value="network">Network View</option>
-          <option value="evolution">Evolution View</option>
-        </select>
-      </div>
-      
-      <div class="filter-group">
-        <label for="color-by">Color By:</label>
-        <select id="color-by">
-          <option value="category">Primary Category</option>
-          <option value="style">Engagement Style</option>
-          <option value="intensity">Engagement Intensity</option>
-        </select>
-      </div>
-      
-      <div class="filter-group">
-        <label for="filter-category">Filter Category:</label>
-        <select id="filter-category">
-          <option value="all">All Categories</option>
-          <option value="academic">Academic</option>
-          <option value="social">Social</option>
-          <option value="professional">Professional</option>
-          <option value="cultural">Cultural</option>
-          <option value="athletic">Athletic</option>
-        </select>
-      </div>
-      
-      <div class="search-group">
-        <input type="text" id="student-search" placeholder="Search by student ID...">
-        <button id="search-btn">Search</button>
-      </div>
-    </div>
-    
-    <div class="visualization-container">
-      <div class="zoom-controls">
-        <button id="zoom-in">+</button>
-        <button id="zoom-out">-</button>
-        <button id="reset-view">Reset</button>
-      </div>
-      
-      <div id="mosaic-container">
-        <!-- Canvas will be inserted here by JavaScript -->
-      </div>
-      
-      <div id="student-details" class="student-details hidden">
-        <div class="details-header">
-          <h3>Student Details</h3>
-          <button class="close-btn">&times;</button>
-        </div>
-        <div class="details-content">
-          <!-- Will be populated by JavaScript -->
-        </div>
-      </div>
-    </div>
-    
-    <!-- Updated legend section with more descriptive content - no emojis -->
-    <div class="legend">
-      <h3>SMU Spirit Mosaic Legend</h3>
-      <div class="legend-items">
-        <div class="legend-group">
-          <h4>Engagement Categories</h4>
-          <p class="legend-description">Students are grouped into horizontal bands based on their primary engagement category.</p>
-          <div class="legend-item">
-            <div class="color-sample academic"></div>
-            <span>Academic: Research, lectures, study groups (blue band)</span>
+    <div class="main-content">
+      <div class="left-panel">
+        <div class="controls">
+          <div class="filter-group">
+            <label for="display-mode">Display:</label>
+            <select id="display-mode">
+              <option value="mosaic">Mosaic View</option>
+              <option value="network">Network View</option>
+              <option value="evolution">Evolution View</option>
+            </select>
           </div>
-          <div class="legend-item">
-            <div class="color-sample social"></div>
-            <span>Social: Clubs, campus events, community service (yellow band)</span>
+          
+          <div class="filter-group">
+            <label for="color-by">Color By:</label>
+            <select id="color-by">
+              <option value="category">Primary Category</option>
+              <option value="style">Engagement Style</option>
+              <option value="intensity">Engagement Intensity</option>
+            </select>
           </div>
-          <div class="legend-item">
-            <div class="color-sample professional"></div>
-            <span>Professional: Career workshops, networking, industry panels (teal band)</span>
+          
+          <div class="filter-group">
+            <label for="filter-category">Filter:</label>
+            <select id="filter-category">
+              <option value="all">All Categories</option>
+              <option value="academic">Academic</option>
+              <option value="social">Social</option>
+              <option value="professional">Professional</option>
+              <option value="cultural">Cultural</option>
+              <option value="athletic">Athletic</option>
+            </select>
           </div>
-          <div class="legend-item">
-            <div class="color-sample cultural"></div>
-            <span>Cultural: Arts, music, diversity events (gray band)</span>
-          </div>
-          <div class="legend-item">
-            <div class="color-sample athletic"></div>
-            <span>Athletic: Sports, fitness, team activities (red band)</span>
+          
+          <div class="search-group">
+            <input type="text" id="student-search" placeholder="Search by ID...">
+            <button id="search-btn">Search</button>
           </div>
         </div>
         
-        <div class="legend-group">
-          <h4>Engagement Styles</h4>
-          <p class="legend-description">Each icon's position and shape indicates the student's engagement style.</p>
-          <div class="legend-item">
-            <div class="style-sample sampler"></div>
-            <span>Sampler: Tries a variety of different activities (scattered positions, circle shape)</span>
-          </div>
-          <div class="legend-item">
-            <div class="style-sample specialist"></div>
-            <span>Specialist: Focuses deeply on one category (clustered tightly in category band, square shape)</span>
-          </div>
-          <div class="legend-item">
-            <div class="style-sample super-connector"></div>
-            <span>Super Connector: Bridges between multiple categories (often spans category boundaries, cross shape)</span>
-          </div>
-          <div class="legend-item">
-            <div class="style-sample selective"></div>
-            <span>Selective: Participates in few carefully chosen activities (forms tight clusters, diamond shape)</span>
+        <div class="legend">
+          <h3>Legend</h3>
+          <div class="legend-items">
+            <div class="legend-group">
+              <h4>Categories</h4>
+              <div class="legend-item"><div class="color-sample academic"></div><span>Academic</span></div>
+              <div class="legend-item"><div class="color-sample social"></div><span>Social</span></div>
+              <div class="legend-item"><div class="color-sample professional"></div><span>Professional</span></div>
+              <div class="legend-item"><div class="color-sample cultural"></div><span>Cultural</span></div>
+              <div class="legend-item"><div class="color-sample athletic"></div><span>Athletic</span></div>
+            </div>
+            
+            <div class="legend-group">
+              <h4>Styles</h4>
+              <div class="legend-item"><div class="style-sample sampler"></div><span>Sampler</span></div>
+              <div class="legend-item"><div class="style-sample specialist"></div><span>Specialist</span></div>
+              <div class="legend-item"><div class="style-sample super-connector"></div><span>Super Connector</span></div>
+              <div class="legend-item"><div class="style-sample selective"></div><span>Selective</span></div>
+            </div>
           </div>
         </div>
+      </div>
+      
+      <div class="visualization-container">
+        <div class="zoom-controls">
+          <button id="zoom-in">+</button>
+          <button id="zoom-out">-</button>
+          <button id="reset-view">Reset</button>
+        </div>
         
-        <div class="legend-group">
-          <h4>Visualization Features</h4>
-          <p class="legend-description">Other visual elements provide additional information:</p>
-          <div class="legend-item">
-            <div class="feature-sample size"></div>
-            <span>Icon Size: Larger icons indicate more engagement events</span>
+        <div id="mosaic-container">
+          <!-- Canvas will be inserted here by JavaScript -->
+        </div>
+        
+        <div id="student-details" class="student-details hidden">
+          <div class="details-header">
+            <h3>Student Details</h3>
+            <button class="close-btn">&times;</button>
           </div>
-          <div class="legend-item">
-            <div class="feature-sample connection"></div>
-            <span>Connections: Lines show students who participated in the same events</span>
-          </div>
-          <div class="legend-item">
-            <div class="feature-sample highlight"></div>
-            <span>Highlight: Selected or hovered students have white borders</span>
-          </div>
-          <div class="legend-item">
-            <div class="feature-sample evolution"></div>
-            <span>Evolution View: Shows how engagement changes over the school year</span>
+          <div class="details-content">
+            <!-- Will be populated by JavaScript -->
           </div>
         </div>
       </div>

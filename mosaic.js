@@ -483,17 +483,12 @@ class SpiritMosaic {
       this.ctx.lineTo(this.width, y + height/2);
       this.ctx.stroke();
       
-      // Draw more prominent label
+      // Draw only the category name
       this.ctx.fillStyle = `rgba(${categoryColor[0]}, ${categoryColor[1]}, ${categoryColor[2]}, 0.85)`;
       this.ctx.font = 'bold 16px Arial';
       this.ctx.textAlign = 'left';
       this.ctx.textBaseline = 'middle';
       this.ctx.fillText(`${band.label}`, 15, y);
-      
-      // Draw a legend for what the band represents
-      this.ctx.font = '12px Arial';
-      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-      this.ctx.fillText(`Students primarily engaged in ${band.label.toLowerCase()} activities`, 160, y);
     }
   }
   
