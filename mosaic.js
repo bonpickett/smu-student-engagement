@@ -55,8 +55,24 @@ class SpiritMosaic {
     // Add category bands visualization
     this.showCategoryBands = true;
     
+    // Track connected students for network view
+    this.connectedStudents = new Set();
+    
+    // Listen for student details panel close event to restore all students
+    document.addEventListener('studentDetailsClose', this.resetNetworkView.bind(this));
+    
     // Update legend to match visualization
     this.updateLegend();
+  }
+  
+  // Reset network view when student details are closed
+  resetNetworkView() {
+    // Only need to do this if we're in network view
+    if (this.displayMode === 'network' && this.selectedStudentId) {
+      this.selectedStudentId = null;
+      this.connectedStudents.clear();
+      this.render();
+    }
   }
   
   // Update the legend to match the current visualization
@@ -277,7 +293,36 @@ class SpiritMosaic {
     const worldX = (canvasX / this.zoomLevel) - this.viewX;
     const worldY = (canvasY / this.zoomLevel) - this.viewY;
     
-    // Check each student
+    // In network view with selection, only allow interactions with visible students
+    if (this.displayMode === 'network' && this.selectedStudentId && this.connectedStudents.size > 0) {
+      // Check visible students
+      const visibleStudents = [this.selectedStudentId, ...Array.from(this.connectedStudents)];
+      
+      for (const studentId of visibleStudents) {
+        const student = dataManager.getStudentById(studentId);
+        if (!student) continue;
+        
+        const pos = dataManager.getStudentPosition(student.id);
+        const x = pos.x * this.width;
+        const y = pos.y * this.height;
+        
+        // Adjust hit box size based on zoom level
+        const effectiveTileSize = this.getTileSize(student);
+        
+        if (
+          worldX >= x - effectiveTileSize/2 &&
+          worldX <= x + effectiveTileSize/2 &&
+          worldY >= y - effectiveTileSize/2 &&
+          worldY <= y + effectiveTileSize/2
+        ) {
+          return student;
+        }
+      }
+      
+      return null;
+    }
+    
+    // Normal hit testing for other views
     for (const student of dataManager.filteredStudents) {
       const pos = dataManager.getStudentPosition(student.id);
       const x = pos.x * this.width;
@@ -317,10 +362,35 @@ class SpiritMosaic {
     return size;
   }
   
+  // Find connected students for a specific student
+  findConnectedStudents(studentId) {
+    const student = dataManager.getStudentById(studentId);
+    if (!student || !student.connections) return new Set();
+    
+    const connectedIds = new Set();
+    
+    // Add each connected student
+    for (const connection of student.connections) {
+      connectedIds.add(connection.studentId);
+    }
+    
+    return connectedIds;
+  }
+  
   // Select a student for detailed view
   selectStudent(studentId) {
     if (this.selectedStudentId !== studentId) {
       this.selectedStudentId = studentId;
+      
+      // If in network view, find connected students
+      if (this.displayMode === 'network') {
+        this.connectedStudents = this.findConnectedStudents(studentId);
+        
+        // Ensure connections are generated
+        if (!dataManager.students[0].connections || dataManager.students[0].connections.length === 0) {
+          dataManager.generateConnections();
+        }
+      }
       
       // Trigger event for details panel update
       const event = new CustomEvent('studentSelected', {
@@ -334,11 +404,21 @@ class SpiritMosaic {
   
   // Update the visualization with new data
   update(displayMode, colorBy, filterCategory) {
+    // If changing from network to another mode, reset connected students
+    if (this.displayMode === 'network' && displayMode !== 'network') {
+      this.connectedStudents.clear();
+    }
+    
     this.displayMode = displayMode;
     this.colorBy = colorBy;
     
     // Apply filters in data manager
     dataManager.applyFilters(filterCategory);
+    
+    // If in network view, recalculate connections for selected student
+    if (this.displayMode === 'network' && this.selectedStudentId) {
+      this.connectedStudents = this.findConnectedStudents(this.selectedStudentId);
+    }
     
     this.render();
   }
@@ -507,12 +587,92 @@ class SpiritMosaic {
       dataManager.generateConnections();
     }
     
-    // Draw all connections
-    this.renderNetworkConnections(0.4); // Moderate connections
+    // If a student is selected, only show that student and their connections
+    if (this.selectedStudentId && this.connectedStudents.size > 0) {
+      // Get the selected student
+      const selectedStudent = dataManager.getStudentById(this.selectedStudentId);
+      
+      // Draw connections for the selected student
+      this.renderFocusedConnections();
+      
+      // Draw the selected student
+      if (selectedStudent) {
+        this.drawStudentTile(selectedStudent);
+      }
+      
+      // Draw connected students
+      for (const connectedId of this.connectedStudents) {
+        const connectedStudent = dataManager.getStudentById(connectedId);
+        if (connectedStudent) {
+          this.drawStudentTile(connectedStudent);
+        }
+      }
+    } else {
+      // Standard network view - draw all connections and students
+      this.renderNetworkConnections(0.4); // Moderate connections
+      
+      // Draw all student tiles
+      for (const student of dataManager.filteredStudents) {
+        this.drawStudentTile(student);
+      }
+    }
+  }
+  
+  // Render connections only for the selected student
+  renderFocusedConnections() {
+    if (!this.selectedStudentId) return;
     
-    // Draw all student tiles
-    for (const student of dataManager.filteredStudents) {
-      this.drawStudentTile(student);
+    const selectedStudent = dataManager.getStudentById(this.selectedStudentId);
+    if (!selectedStudent || !selectedStudent.connections) return;
+    
+    const pos1 = dataManager.getStudentPosition(selectedStudent.id);
+    const x1 = pos1.x * this.width;
+    const y1 = pos1.y * this.height;
+    
+    // Higher opacity for focused connections
+    const opacity = 0.8;
+    
+    for (const connection of selectedStudent.connections) {
+      const connectedStudent = dataManager.getStudentById(connection.studentId);
+      if (!connectedStudent) continue;
+      
+      const pos2 = dataManager.getStudentPosition(connection.studentId);
+      const x2 = pos2.x * this.width;
+      const y2 = pos2.y * this.height;
+      
+      // Set style based on connection type
+      let strokeColor;
+      
+      if (connection.eventKey.includes('academic')) {
+        strokeColor = `rgba(53, 76, 161, ${opacity})`;
+      } else if (connection.eventKey.includes('social')) {
+        strokeColor = `rgba(249, 200, 14, ${opacity})`;
+      } else if (connection.eventKey.includes('professional')) {
+        strokeColor = `rgba(89, 195, 195, ${opacity})`;
+      } else if (connection.eventKey.includes('cultural')) {
+        strokeColor = `rgba(128, 128, 128, ${opacity})`;
+      } else if (connection.eventKey.includes('athletic')) {
+        strokeColor = `rgba(204, 0, 53, ${opacity})`;
+      } else {
+        strokeColor = `rgba(100, 100, 100, ${opacity})`;
+      }
+      
+      // Draw thicker connection lines for focused view
+      this.ctx.beginPath();
+      this.ctx.moveTo(x1, y1);
+      this.ctx.lineTo(x2, y2);
+      this.ctx.strokeStyle = strokeColor;
+      this.ctx.lineWidth = 2; // Thicker lines in focused view
+      this.ctx.stroke();
+      
+      // Draw a small event indicator at the midpoint
+      const midX = (x1 + x2) / 2;
+      const midY = (y1 + y2) / 2;
+      
+      this.ctx.beginPath();
+      this.ctx.arc(midX, midY, 4, 0, Math.PI * 2);
+      this.ctx.fillStyle = strokeColor;
+      this.ctx.fill();
     }
   }
   

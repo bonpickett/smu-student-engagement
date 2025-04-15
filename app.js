@@ -114,9 +114,13 @@ function setupStudentDetailsPanel() {
   const detailsPanel = document.getElementById('student-details');
   const closeBtn = detailsPanel.querySelector('.close-btn');
   
-  // Close button handler
+  // Close button handler - dispatch event when panel is closed
   closeBtn.addEventListener('click', function() {
     detailsPanel.classList.add('hidden');
+    
+    // Create and dispatch a custom event when details panel is closed
+    const event = new CustomEvent('studentDetailsClose');
+    document.dispatchEvent(event);
   });
   
   // Listen for student selection events
@@ -131,6 +135,10 @@ function setupStudentDetailsPanel() {
       }
     } else {
       detailsPanel.classList.add('hidden');
+      
+      // Dispatch close event when no student is selected
+      const event = new CustomEvent('studentDetailsClose');
+      document.dispatchEvent(event);
     }
   });
 }
